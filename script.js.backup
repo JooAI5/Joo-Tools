@@ -1,0 +1,2366 @@
+
+const tools = [
+
+{
+id:"calculator",
+category:"🧮 Calculators",
+icon:"🧮",
+name:"Calculator",
+description:"A clean calculator for everyday calculations.",
+run:calculator
+},
+
+{
+id:"percentage",
+category:"🧮 Calculators",
+icon:"📊",
+name:"Percentage Calculator",
+description:"Calculate percentages instantly.",
+run:percentage
+},
+
+{
+id:"average",
+category:"🧮 Calculators",
+icon:"📈",
+name:"Average Calculator",
+description:"Find average, minimum and maximum values.",
+run:averageTool
+},
+
+{
+id:"random-number",
+category:"🎲 Generators",
+icon:"🎲",
+name:"Random Number",
+description:"Generate a random number from any range.",
+run:randomNumber
+},
+
+{
+id:"random-choice",
+category:"🎯 Generators",
+icon:"🎯",
+name:"Random Choice",
+description:"Let Joo Tools randomly choose for you.",
+run:randomChoice
+},
+
+{
+id:"uuid",
+category:"🎲 Generators",
+icon:"🆔",
+name:"UUID Generator",
+description:"Generate unique UUID identifiers.",
+run:uuidGenerator
+},
+
+{
+id:"gradient",
+category:"🎨 Design",
+icon:"🌈",
+name:"Gradient Generator",
+description:"Create beautiful CSS gradients.",
+run:gradientGenerator
+},
+
+{
+id:"palette",
+category:"🎨 Design",
+icon:"🎨",
+name:"Color Palette",
+description:"Generate beautiful color combinations.",
+run:paletteGenerator
+},
+
+{
+id:"text-cleaner",
+category:"📝 Text",
+icon:"🧹",
+name:"Text Cleaner",
+description:"Clean spaces and empty lines.",
+run:textCleaner
+},
+
+{
+id:"text-sorter",
+category:"📝 Text",
+icon:"🔤",
+name:"Text Sorter",
+description:"Sort text lines alphabetically.",
+run:textSorter
+},
+
+{
+id:"duplicate",
+category:"📝 Text",
+icon:"♻️",
+name:"Duplicate Remover",
+description:"Remove duplicate lines instantly.",
+run:duplicateRemover
+},
+
+{
+id:"json",
+category:"💻 Developer",
+icon:"{}",
+name:"JSON Formatter",
+description:"Format and validate JSON data.",
+run:jsonFormatter
+},
+
+{
+id:"url",
+category:"💻 Developer",
+icon:"🔗",
+name:"URL Encoder",
+description:"Encode and decode URLs locally.",
+run:urlEncoder
+},
+
+{
+id:"base64",
+category:"💻 Developer",
+icon:"🧬",
+name:"Base64",
+description:"Encode and decode Base64 text.",
+run:base64Tool
+},
+
+{
+id:"base",
+category:"💻 Developer",
+icon:"🔢",
+name:"Base Converter",
+description:"Convert numbers between bases.",
+run:baseConverter
+},
+
+{
+id:"hash",
+category:"🔐 Security",
+icon:"🔐",
+name:"SHA-256 Hash",
+description:"Generate SHA-256 hashes locally.",
+run:hashTool
+},
+
+{
+id:"password",
+category:"🔐 Security",
+icon:"🔑",
+name:"Password Generator",
+description:"Create strong random passwords.",
+run:passwordTool
+},
+
+{
+id:"units",
+category:"📏 Converters",
+icon:"📏",
+name:"Unit Converter",
+description:"Convert common measurement units.",
+run:unitTool
+},
+
+{
+id:"roman",
+category:"🔢 Number Tools",
+icon:"🏛️",
+name:"Roman Numerals",
+description:"Convert numbers into Roman numerals.",
+run:romanTool
+},
+
+{
+id:"number-words",
+category:"🔢 Number Tools",
+icon:"🔤",
+name:"Number To Words",
+description:"Convert numbers into English words.",
+run:numberWordsTool
+},
+
+{
+id:"age",
+category:"🧮 Calculators",
+icon:"🎂",
+name:"Age Calculator",
+description:"Calculate your exact age.",
+run:ageTool
+},
+
+{
+id:"stopwatch",
+category:"⏱️ Time",
+icon:"⏱️",
+name:"Stopwatch",
+description:"Precise browser stopwatch.",
+run:stopwatch
+},
+
+{
+id:"countdown",
+category:"⏳ Time",
+icon:"⏳",
+name:"Countdown",
+description:"Create a custom countdown.",
+run:countdown
+}
+
+];
+
+let favorites=
+JSON.parse(
+localStorage.getItem("jooFavorites")||"[]"
+);
+
+let recent=
+JSON.parse(
+localStorage.getItem("jooRecent")||"[]"
+);
+
+const sections=
+document.getElementById("toolSections");
+
+const search=
+document.getElementById("search");
+
+const modal=
+document.getElementById("toolModal");
+
+const area=
+document.getElementById("toolArea");
+
+const toast=
+document.getElementById("toast");
+
+
+/* =========================
+RENDER
+========================= */
+
+function render(list=tools){
+
+sections.innerHTML="";
+
+const grouped={};
+
+list.forEach(tool=>{
+
+if(!grouped[tool.category])
+grouped[tool.category]=[];
+
+grouped[tool.category].push(tool);
+
+});
+
+Object.entries(grouped).forEach(
+([category,list])=>{
+
+const section=
+document.createElement("section");
+
+section.className="category";
+
+section.innerHTML=`
+
+<div class="category-heading">
+
+<h2>${category}</h2>
+
+<span>${list.length} tools</span>
+
+</div>
+
+<div class="tools">
+
+${list.map(toolCard).join("")}
+
+</div>
+
+`;
+
+sections.appendChild(section);
+
+});
+
+updateStats();
+
+}
+
+
+/* =========================
+CARD
+========================= */
+
+function toolCard(tool){
+
+const active=
+favorites.includes(tool.id)
+?"active":"";
+
+return `
+
+<article class="tool-card">
+
+<div class="tool-top">
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<button
+class="favorite ${active}"
+onclick="toggleFavorite('${tool.id}',event)">
+
+★
+
+</button>
+
+</div>
+
+<h3>
+${tool.name}
+</h3>
+
+<p>
+${tool.description}
+</p>
+
+<button
+class="open-button"
+onclick="openTool('${tool.id}')">
+
+Open Tool →
+
+</button>
+
+</article>
+
+`;
+
+}
+
+
+/* =========================
+FAVORITES
+========================= */
+
+function toggleFavorite(id,event){
+
+if(event)
+event.stopPropagation();
+
+if(favorites.includes(id)){
+
+favorites=
+favorites.filter(x=>x!==id);
+
+showToast("Removed from favorites","☆");
+
+}else{
+
+favorites.push(id);
+
+showToast("Added to favorites","★");
+
+}
+
+localStorage.setItem(
+"jooFavorites",
+JSON.stringify(favorites)
+);
+
+render();
+
+}
+
+
+function showFavorites(){
+
+document.querySelectorAll(".nav-item")
+.forEach(x=>x.classList.remove("active"));
+
+const list=
+tools.filter(x=>favorites.includes(x.id));
+
+document.getElementById("pageTitle")
+.textContent="Favorites";
+
+document.getElementById("pageSubtitle")
+.textContent="Your saved tools";
+
+document.getElementById("pageIcon")
+.textContent="★";
+
+render(list);
+
+}
+
+
+/* =========================
+RECENT
+========================= */
+
+function showRecent(){
+
+const list=
+recent
+.map(id=>tools.find(x=>x.id===id))
+.filter(Boolean);
+
+document.getElementById("pageTitle")
+.textContent="Recent";
+
+document.getElementById("pageSubtitle")
+.textContent="Your recently used tools";
+
+document.getElementById("pageIcon")
+.textContent="◷";
+
+render(list);
+
+}
+
+
+/* =========================
+SEARCH
+========================= */
+
+search.addEventListener("input",()=>{
+
+const q=
+search.value.trim().toLowerCase();
+
+if(!q){
+
+render();
+
+return;
+
+}
+
+const result=
+tools.filter(tool=>
+
+tool.name.toLowerCase().includes(q) ||
+
+tool.description.toLowerCase().includes(q) ||
+
+tool.category.toLowerCase().includes(q)
+
+);
+
+render(result);
+
+});
+
+
+/* =========================
+OPEN TOOL
+========================= */
+
+function openTool(id){
+
+const tool=
+tools.find(x=>x.id===id);
+
+if(!tool)return;
+
+recent=
+[
+id,
+...recent.filter(x=>x!==id)
+].slice(0,8);
+
+localStorage.setItem(
+"jooRecent",
+JSON.stringify(recent)
+);
+
+document.getElementById("toolHeaderInfo").innerHTML=`
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<div>
+
+<div class="tool-title">
+${tool.name}
+</div>
+
+<div class="tool-subtitle">
+${tool.category}
+</div>
+
+</div>
+
+`;
+
+area.innerHTML=`
+
+<div class="tool-ui">
+
+${tool.run()}
+
+</div>
+
+`;
+
+modal.classList.remove("hidden");
+
+updateStats();
+
+}
+
+
+function closeTool(){
+
+modal.classList.add("hidden");
+
+area.innerHTML="";
+
+}
+
+
+/* =========================
+TOAST
+========================= */
+
+function showToast(text,icon="✓"){
+
+document.getElementById("toastText")
+.textContent=text;
+
+document.getElementById("toastIcon")
+.textContent=icon;
+
+toast.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer=
+setTimeout(
+()=>toast.classList.remove("show"),
+2200
+);
+
+}
+
+
+/* =========================
+STATS
+========================= */
+
+function updateStats(){
+
+document.getElementById("toolCount")
+.textContent=tools.length;
+
+document.getElementById("favCount")
+.textContent=favorites.length;
+
+document.getElementById("recentCount")
+.textContent=recent.length;
+
+}
+
+
+/* =========================
+NAVIGATION
+========================= */
+
+function goHome(){
+
+document.getElementById("pageTitle")
+.textContent="All Tools";
+
+document.getElementById("pageSubtitle")
+.textContent="Everything you need in one place";
+
+document.getElementById("pageIcon")
+.textContent="⌂";
+
+search.value="";
+
+render();
+
+}
+
+
+document.querySelectorAll(
+".nav-item,.mobile-nav button"
+).forEach(button=>{
+
+button.addEventListener("click",()=>{
+
+const page=button.dataset.page;
+
+if(page==="home")
+goHome();
+
+if(page==="favorites")
+showFavorites();
+
+if(page==="recent")
+showRecent();
+
+});
+
+});
+
+
+/* =========================
+MOBILE MENU
+========================= */
+
+document.getElementById("mobileMenu")
+.addEventListener("click",()=>{
+
+document.querySelector(".sidebar")
+.classList.toggle("open");
+
+});
+
+
+/* =========================
+THEME
+========================= */
+
+document.getElementById("themeBtn")
+.addEventListener("click",()=>{
+
+document.body.classList.toggle("light");
+
+const light=
+document.body.classList.contains("light");
+
+document.getElementById("themeBtn")
+.textContent=
+light?"🌙":"☀️";
+
+localStorage.setItem(
+"jooTheme",
+light?"light":"dark"
+);
+
+});
+
+
+if(
+localStorage.getItem("jooTheme")==="light"
+){
+
+document.body.classList.add("light");
+
+document.getElementById("themeBtn")
+.textContent="🌙";
+
+}
+
+
+/* =========================
+TOOLS
+========================= */
+
+function calculator(){
+
+return `
+
+<input
+id="calc"
+placeholder="Example: 25 * 4 + 10">
+
+<div class="tool-actions">
+
+<button onclick="calculate()">
+Calculate
+</button>
+
+<button
+class="secondary"
+onclick="document.getElementById('calc').value=''">
+
+Clear
+
+</button>
+
+</div>
+
+<div id="calcResult"
+class="tool-result">
+
+Result will appear here.
+
+</div>
+
+`;
+
+}
+
+
+function calculate(){
+
+const value=
+document.getElementById("calc").value;
+
+if(
+!/^[0-9+*/().%\\-\\s]+$/.test(value)
+){
+
+showToast("Invalid expression","!");
+
+return;
+
+}
+
+try{
+
+const result=
+Function(
+'"use strict";return ('+
+value+
+')'
+)();
+
+document.getElementById(
+"calcResult"
+).textContent=result;
+
+showToast("Calculation complete");
+
+}catch{
+
+showToast("Invalid calculation","!");
+
+}
+
+}
+
+
+function percentage(){
+
+return `
+
+<div class="tool-grid">
+
+<div>
+
+<label>Number</label>
+
+<input
+id="percentValue"
+type="number"
+placeholder="100">
+
+</div>
+
+<div>
+
+<label>Percentage</label>
+
+<input
+id="percentRate"
+type="number"
+placeholder="20">
+
+</div>
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="calculatePercentage()">
+Calculate
+</button>
+
+</div>
+
+<div
+id="percentageResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function calculatePercentage(){
+
+const a=
+Number(
+document.getElementById("percentValue").value
+);
+
+const b=
+Number(
+document.getElementById("percentRate").value
+);
+
+document.getElementById(
+"percentageResult"
+).textContent=
+`${a*b/100}`;
+
+}
+
+
+function averageTool(){
+
+return `
+
+<label>Numbers</label>
+
+<textarea
+id="averageNumbers"
+placeholder="10, 20, 30, 40"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="calculateAverage()">
+Calculate Statistics
+</button>
+
+</div>
+
+<div
+id="averageResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function calculateAverage(){
+
+const numbers=
+document.getElementById(
+"averageNumbers"
+)
+.value
+.split(/[,\s]+/)
+.map(Number)
+.filter(Number.isFinite);
+
+if(!numbers.length)return;
+
+const sum=
+numbers.reduce((a,b)=>a+b,0);
+
+const avg=sum/numbers.length;
+
+document.getElementById(
+"averageResult"
+).textContent=
+
+`Count: ${numbers.length}
+Sum: ${sum}
+Average: ${avg}
+Minimum: ${Math.min(...numbers)}
+Maximum: ${Math.max(...numbers)}`;
+
+}
+
+
+function randomNumber(){
+
+return `
+
+<div class="tool-grid">
+
+<input
+id="min"
+type="number"
+placeholder="Minimum">
+
+<input
+id="max"
+type="number"
+placeholder="Maximum">
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="generateRandom()">
+Generate
+</button>
+
+</div>
+
+<div
+id="randomResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function generateRandom(){
+
+const min=
+Number(
+document.getElementById("min").value
+);
+
+const max=
+Number(
+document.getElementById("max").value
+);
+
+if(max<min)return;
+
+document.getElementById(
+"randomResult"
+).textContent=
+Math.floor(
+Math.random()*(max-min+1)
+)+min;
+
+}
+
+
+function randomChoice(){
+
+return `
+
+<label>Choices</label>
+
+<textarea
+id="choices"
+placeholder="One choice per line"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="chooseRandom()">
+Choose Randomly
+</button>
+
+</div>
+
+<div
+id="choiceResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function chooseRandom(){
+
+const values=
+document.getElementById("choices")
+.value
+.split("\n")
+.map(x=>x.trim())
+.filter(Boolean);
+
+if(!values.length)return;
+
+document.getElementById(
+"choiceResult"
+).textContent=
+values[
+Math.floor(Math.random()*values.length)
+];
+
+}
+
+
+function textCleaner(){
+
+return `
+
+<label>Text</label>
+
+<textarea
+id="cleanerText"
+placeholder="Paste your text here..."></textarea>
+
+<div class="tool-actions">
+
+<button onclick="cleanTextSpaces()">
+Remove Extra Spaces
+</button>
+
+<button onclick="cleanEmptyLines()">
+Remove Empty Lines
+</button>
+
+<button onclick="cleanAllText()">
+Clean All
+</button>
+
+</div>
+
+`;
+
+}
+
+
+function cleanTextSpaces(){
+
+const el=
+document.getElementById("cleanerText");
+
+el.value=
+el.value
+.replace(/[ \t]+/g," ")
+.trim();
+
+}
+
+
+function cleanEmptyLines(){
+
+const el=
+document.getElementById("cleanerText");
+
+el.value=
+el.value
+.split("\n")
+.filter(x=>x.trim())
+.join("\n");
+
+}
+
+
+function cleanAllText(){
+
+cleanTextSpaces();
+
+cleanEmptyLines();
+
+showToast("Text cleaned");
+
+}
+
+
+function textSorter(){
+
+return `
+
+<label>Text</label>
+
+<textarea
+id="sortText"
+placeholder="One item per line"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="sortText()">
+A → Z
+</button>
+
+<button
+class="secondary"
+onclick="sortText(true)">
+Z → A
+</button>
+
+</div>
+
+`;
+
+}
+
+
+function sortText(reverse=false){
+
+const el=
+document.getElementById("sortText");
+
+let lines=
+el.value
+.split("\n")
+.filter(Boolean);
+
+lines.sort((a,b)=>
+a.localeCompare(b)
+);
+
+if(reverse)lines.reverse();
+
+el.value=lines.join("\n");
+
+}
+
+
+function duplicateRemover(){
+
+return `
+
+<label>Lines</label>
+
+<textarea
+id="duplicateText"
+placeholder="One item per line"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="removeDuplicates()">
+Remove Duplicates
+</button>
+
+</div>
+
+`;
+
+}
+
+
+function removeDuplicates(){
+
+const el=
+document.getElementById(
+"duplicateText"
+);
+
+el.value=
+[
+...new Set(
+el.value.split("\n")
+)
+].join("\n");
+
+showToast("Duplicates removed");
+
+}
+
+
+function jsonFormatter(){
+
+return `
+
+<label>JSON</label>
+
+<textarea
+id="jsonText"
+placeholder='{"name":"Joo","version":3}'></textarea>
+
+<div class="tool-actions">
+
+<button onclick="formatJSON()">
+Format
+</button>
+
+<button
+class="secondary"
+onclick="minifyJSON()">
+Minify
+</button>
+
+</div>
+
+<div
+id="jsonResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function formatJSON(){
+
+try{
+
+const obj=
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+document.getElementById(
+"jsonResult"
+).textContent=
+JSON.stringify(obj,null,2);
+
+}catch{
+
+showToast("Invalid JSON","!");
+
+}
+
+}
+
+
+function minifyJSON(){
+
+try{
+
+const obj=
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+document.getElementById(
+"jsonResult"
+).textContent=
+JSON.stringify(obj);
+
+}catch{
+
+showToast("Invalid JSON","!");
+
+}
+
+}
+
+
+function urlEncoder(){
+
+return `
+
+<label>Text / URL</label>
+
+<textarea
+id="urlText"
+placeholder="https://example.com/hello world"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="encodeURL()">
+Encode
+</button>
+
+<button
+class="secondary"
+onclick="decodeURL()">
+Decode
+</button>
+
+</div>
+
+<div
+id="urlResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function encodeURL(){
+
+document.getElementById(
+"urlResult"
+).textContent=
+encodeURIComponent(
+document.getElementById("urlText").value
+);
+
+}
+
+
+function decodeURL(){
+
+try{
+
+document.getElementById(
+"urlResult"
+).textContent=
+decodeURIComponent(
+document.getElementById("urlText").value
+);
+
+}catch{
+
+showToast("Invalid encoded URL","!");
+
+}
+
+}
+
+
+function base64Tool(){
+
+return `
+
+<label>Text</label>
+
+<textarea
+id="base64Input"
+placeholder="Enter text"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="encodeBase64()">
+Encode
+</button>
+
+<button
+class="secondary"
+onclick="decodeBase64()">
+Decode
+</button>
+
+</div>
+
+<div
+id="base64Result"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function encodeBase64(){
+
+const text=
+document.getElementById(
+"base64Input"
+).value;
+
+const bytes=
+new TextEncoder().encode(text);
+
+let binary="";
+
+bytes.forEach(
+b=>binary+=String.fromCharCode(b)
+);
+
+document.getElementById(
+"base64Result"
+).textContent=
+btoa(binary);
+
+}
+
+
+function decodeBase64(){
+
+try{
+
+const binary=
+atob(
+document.getElementById(
+"base64Input"
+).value
+);
+
+const bytes=
+Uint8Array.from(
+binary,
+x=>x.charCodeAt(0)
+);
+
+document.getElementById(
+"base64Result"
+).textContent=
+new TextDecoder().decode(bytes);
+
+}catch{
+
+showToast("Invalid Base64","!");
+
+}
+
+}
+
+
+function baseConverter(){
+
+return `
+
+<div class="tool-grid">
+
+<input
+id="baseNumber"
+placeholder="Number">
+
+<input
+id="fromBase"
+type="number"
+min="2"
+max="36"
+value="10">
+
+<input
+id="toBase"
+type="number"
+min="2"
+max="36"
+value="16">
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="convertBase()">
+Convert
+</button>
+
+</div>
+
+<div
+id="baseResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function convertBase(){
+
+const value=
+document.getElementById(
+"baseNumber"
+).value;
+
+const from=
+Number(
+document.getElementById(
+"fromBase"
+).value
+);
+
+const to=
+Number(
+document.getElementById(
+"toBase"
+).value
+);
+
+const decimal=
+parseInt(value,from);
+
+if(isNaN(decimal)){
+
+showToast("Invalid number","!");
+
+return;
+
+}
+
+document.getElementById(
+"baseResult"
+).textContent=
+decimal.toString(to).toUpperCase();
+
+}
+
+
+function uuidGenerator(){
+
+return `
+
+<div class="tool-actions">
+
+<button onclick="generateUUID()">
+Generate UUID
+</button>
+
+<button
+class="secondary"
+onclick="copyElement('uuidResult')">
+Copy
+</button>
+
+</div>
+
+<div
+id="uuidResult"
+class="tool-result">
+
+Click Generate UUID
+
+</div>
+
+`;
+
+}
+
+
+function generateUUID(){
+
+document.getElementById(
+"uuidResult"
+).textContent=
+crypto.randomUUID();
+
+}
+
+
+function gradientGenerator(){
+
+return `
+
+<div
+id="gradientBox"
+style="
+height:230px;
+border-radius:18px;
+background:linear-gradient(135deg,#7c5cff,#00d4ff);
+margin-bottom:15px;
+">
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="generateGradient()">
+Generate Gradient
+</button>
+
+<button
+class="secondary"
+onclick="copyElement('gradientResult')">
+Copy CSS
+</button>
+
+</div>
+
+<div
+id="gradientResult"
+class="tool-result">
+
+linear-gradient(135deg,#7c5cff,#00d4ff)
+
+</div>
+
+`;
+
+}
+
+
+function generateGradient(){
+
+const a=randomColor();
+
+const b=randomColor();
+
+const gradient=
+`linear-gradient(135deg,${a},${b})`;
+
+document.getElementById(
+"gradientBox"
+).style.background=
+gradient;
+
+document.getElementById(
+"gradientResult"
+).textContent=
+gradient;
+
+}
+
+
+function paletteGenerator(){
+
+return `
+
+<div
+id="paletteResult"
+class="palette"
+style="
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:10px;
+margin-bottom:18px;
+">
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="generatePalette()">
+Generate Palette
+</button>
+
+</div>
+
+`;
+
+}
+
+
+function generatePalette(){
+
+const box=
+document.getElementById(
+"paletteResult"
+);
+
+box.innerHTML="";
+
+for(let i=0;i<5;i++){
+
+const color=randomColor();
+
+const item=
+document.createElement("div");
+
+item.style.cssText=`
+
+height:140px;
+border-radius:14px;
+background:${color};
+display:flex;
+align-items:end;
+justify-content:center;
+padding:10px;
+font-size:11px;
+font-weight:bold;
+cursor:pointer;
+text-shadow:0 1px 4px #000;
+
+`;
+
+item.textContent=
+color.toUpperCase();
+
+item.onclick=()=>{
+navigator.clipboard.writeText(color);
+showToast("Color copied");
+};
+
+box.appendChild(item);
+
+}
+
+}
+
+
+function randomColor(){
+
+return "#"+
+Math.floor(
+Math.random()*16777215
+)
+.toString(16)
+.padStart(6,"0");
+
+}
+
+
+function hashTool(){
+
+return `
+
+<label>Text</label>
+
+<textarea
+id="hashText"
+placeholder="Enter text to hash"></textarea>
+
+<div class="tool-actions">
+
+<button onclick="generateSHA256()">
+Generate SHA-256
+</button>
+
+</div>
+
+<div
+id="hashResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+async function generateSHA256(){
+
+const data=
+new TextEncoder().encode(
+document.getElementById(
+"hashText"
+).value
+);
+
+const hash=
+await crypto.subtle.digest(
+"SHA-256",
+data
+);
+
+const hex=
+[...new Uint8Array(hash)]
+.map(
+b=>b.toString(16).padStart(2,"0")
+)
+.join("");
+
+document.getElementById(
+"hashResult"
+).textContent=hex;
+
+}
+
+
+function passwordTool(){
+
+return `
+
+<label>Password Length</label>
+
+<input
+id="passwordLength"
+type="number"
+min="6"
+max="128"
+value="20">
+
+<div class="tool-actions">
+
+<button onclick="generatePassword()">
+Generate Password
+</button>
+
+<button
+class="secondary"
+onclick="copyElement('passwordResult')">
+Copy
+</button>
+
+</div>
+
+<div
+id="passwordResult"
+class="tool-result">
+
+Your password will appear here.
+
+</div>
+
+`;
+
+}
+
+
+function generatePassword(){
+
+const length=
+Number(
+document.getElementById(
+"passwordLength"
+).value
+);
+
+const chars=
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+"abcdefghijklmnopqrstuvwxyz"+
+"0123456789"+
+"!@#$%^&*()_+-=[]{}";
+
+const array=
+new Uint32Array(length);
+
+crypto.getRandomValues(array);
+
+let password="";
+
+for(let i=0;i<length;i++){
+
+password+=
+chars[array[i]%chars.length];
+
+}
+
+document.getElementById(
+"passwordResult"
+).textContent=
+password;
+
+}
+
+
+function copyElement(id){
+
+const text=
+document.getElementById(id)
+.textContent;
+
+navigator.clipboard.writeText(text);
+
+showToast("Copied to clipboard");
+
+}
+
+
+function unitTool(){
+
+return `
+
+<input
+id="unitValue"
+type="number"
+placeholder="Value">
+
+<select id="unitType">
+
+<option value="km-m">
+Kilometers → Meters
+</option>
+
+<option value="m-km">
+Meters → Kilometers
+</option>
+
+<option value="m-cm">
+Meters → Centimeters
+</option>
+
+<option value="cm-m">
+Centimeters → Meters
+</option>
+
+<option value="kg-g">
+Kilograms → Grams
+</option>
+
+<option value="g-kg">
+Grams → Kilograms
+</option>
+
+<option value="lb-kg">
+Pounds → Kilograms
+</option>
+
+<option value="kg-lb">
+Kilograms → Pounds
+</option>
+
+</select>
+
+<div class="tool-actions">
+
+<button onclick="convertUnit()">
+Convert
+</button>
+
+</div>
+
+<div
+id="unitResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function convertUnit(){
+
+const value=
+Number(
+document.getElementById(
+"unitValue"
+).value
+);
+
+const type=
+document.getElementById(
+"unitType"
+).value;
+
+const map={
+
+"km-m":value=>value*1000,
+"m-km":value=>value/1000,
+"m-cm":value=>value*100,
+"cm-m":value=>value/100,
+"kg-g":value=>value*1000,
+"g-kg":value=>value/1000,
+"lb-kg":value=>value*.45359237,
+"kg-lb":value=>value*2.20462262
+
+};
+
+document.getElementById(
+"unitResult"
+).textContent=
+map[type](value);
+
+}
+
+
+function romanTool(){
+
+return `
+
+<input
+id="romanNumber"
+type="number"
+min="1"
+max="3999"
+placeholder="1 - 3999">
+
+<div class="tool-actions">
+
+<button onclick="convertToRoman()">
+Convert
+</button>
+
+</div>
+
+<div
+id="romanResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function convertToRoman(){
+
+let n=
+Number(
+document.getElementById(
+"romanNumber"
+).value
+);
+
+if(n<1||n>3999)return;
+
+const values=[
+[1000,"M"],
+[900,"CM"],
+[500,"D"],
+[400,"CD"],
+[100,"C"],
+[90,"XC"],
+[50,"L"],
+[40,"XL"],
+[10,"X"],
+[9,"IX"],
+[5,"V"],
+[4,"IV"],
+[1,"I"]
+];
+
+let result="";
+
+for(const [v,s] of values){
+
+while(n>=v){
+
+result+=s;
+
+n-=v;
+
+}
+
+}
+
+document.getElementById(
+"romanResult"
+).textContent=result;
+
+}
+
+
+function numberWordsTool(){
+
+return `
+
+<input
+id="wordsNumber"
+type="number"
+min="0"
+max="999999999"
+placeholder="Enter number">
+
+<div class="tool-actions">
+
+<button onclick="convertNumberWords()">
+Convert
+</button>
+
+</div>
+
+<div
+id="wordsResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function convertNumberWords(){
+
+const n=
+Number(
+document.getElementById(
+"wordsNumber"
+).value
+);
+
+if(
+!Number.isInteger(n)||
+n<0||
+n>999999999
+)return;
+
+document.getElementById(
+"wordsResult"
+).textContent=
+numberToWords(n);
+
+}
+
+
+function numberToWords(n){
+
+const ones=[
+"zero","one","two","three","four",
+"five","six","seven","eight","nine",
+"ten","eleven","twelve","thirteen",
+"fourteen","fifteen","sixteen",
+"seventeen","eighteen","nineteen"
+];
+
+const tens=[
+"","","twenty","thirty","forty",
+"fifty","sixty","seventy","eighty","ninety"
+];
+
+if(n<20)return ones[n];
+
+if(n<100)
+return tens[Math.floor(n/10)] +
+(n%10?" "+ones[n%10]:"");
+
+if(n<1000)
+return ones[Math.floor(n/100)]+" hundred"+
+(n%100?" "+numberToWords(n%100):"");
+
+if(n<1000000)
+return numberToWords(
+Math.floor(n/1000)
+)+" thousand"+
+(n%1000?" "+numberToWords(n%1000):"");
+
+return numberToWords(
+Math.floor(n/1000000)
+)+" million"+
+(n%1000000?
+" "+numberToWords(n%1000000):"");
+
+}
+
+
+function ageTool(){
+
+return `
+
+<label>Date of Birth</label>
+
+<input
+id="birthDate"
+type="date">
+
+<div class="tool-actions">
+
+<button onclick="calculateAge()">
+Calculate Age
+</button>
+
+</div>
+
+<div
+id="ageResult"
+class="tool-result">
+
+</div>
+
+`;
+
+}
+
+
+function calculateAge(){
+
+const value=
+document.getElementById(
+"birthDate"
+).value;
+
+if(!value)return;
+
+const birth=
+new Date(value+"T00:00:00");
+
+const today=new Date();
+
+let years=
+today.getFullYear()-
+birth.getFullYear();
+
+let months=
+today.getMonth()-
+birth.getMonth();
+
+let days=
+today.getDate()-
+birth.getDate();
+
+if(days<0){
+
+months--;
+
+days+=new Date(
+today.getFullYear(),
+today.getMonth(),
+0
+).getDate();
+
+}
+
+if(months<0){
+
+years--;
+
+months+=12;
+
+}
+
+document.getElementById(
+"ageResult"
+).textContent=
+`${years} years, ${months} months, ${days} days`;
+
+}
+
+
+let stopwatchTimer=null;
+let stopwatchSeconds=0;
+
+function stopwatch(){
+
+return `
+
+<div
+id="stopwatchDisplay"
+class="tool-result"
+style="
+font-size:42px;
+text-align:center;
+font-variant-numeric:tabular-nums;
+">
+
+00:00:00
+
+</div>
+
+<div class="tool-actions">
+
+<button onclick="startStopwatch()">
+Start
+</button>
+
+<button
+class="secondary"
+onclick="pauseStopwatch()">
+Pause
+</button>
+
+<button
+class="secondary"
+onclick="resetStopwatch()">
+Reset
+</button>
+
+</div>
+
+`;
+
+}
+
+
+function startStopwatch(){
+
+if(stopwatchTimer)return;
+
+stopwatchTimer=
+setInterval(()=>{
+
+stopwatchSeconds++;
+
+const h=
+Math.floor(stopwatchSeconds/3600);
+
+const m=
+Math.floor(
+(stopwatchSeconds%3600)/60
+);
+
+const s=
+stopwatchSeconds%60;
+
+document.getElementById(
+"stopwatchDisplay"
+).textContent=
+`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+
+},1000);
+
+}
+
+
+function pauseStopwatch(){
+
+clearInterval(stopwatchTimer);
+
+stopwatchTimer=null;
+
+}
+
+
+function resetStopwatch(){
+
+pauseStopwatch();
+
+stopwatchSeconds=0;
+
+document.getElementById(
+"stopwatchDisplay"
+).textContent=
+"00:00:00";
+
+}
+
+
+let countdownTimer=null;
+
+function countdown(){
+
+return `
+
+<label>Seconds</label>
+
+<input
+id="countdownSeconds"
+type="number"
+min="1"
+placeholder="60">
+
+<div class="tool-actions">
+
+<button onclick="startCountdown()">
+Start
+</button>
+
+<button
+class="secondary"
+onclick="stopCountdown()">
+Stop
+</button>
+
+</div>
+
+<div
+id="countdownResult"
+class="tool-result"
+style="
+font-size:40px;
+text-align:center;
+">
+
+00:00
+
+</div>
+
+`;
+
+}
+
+
+function startCountdown(){
+
+let seconds=
+Number(
+document.getElementById(
+"countdownSeconds"
+).value
+);
+
+if(seconds<=0)return;
+
+clearInterval(countdownTimer);
+
+updateCountdown(seconds);
+
+countdownTimer=
+setInterval(()=>{
+
+seconds--;
+
+updateCountdown(seconds);
+
+if(seconds<=0)
+clearInterval(countdownTimer);
+
+},1000);
+
+}
+
+
+function updateCountdown(seconds){
+
+const m=
+Math.floor(seconds/60);
+
+const s=
+seconds%60;
+
+document.getElementById(
+"countdownResult"
+).textContent=
+`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+
+}
+
+
+function stopCountdown(){
+
+clearInterval(countdownTimer);
+
+}
+
+
+/* =========================
+INITIALIZE
+========================= */
+
+render();
+

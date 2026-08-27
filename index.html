@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color"
+content="#070912">
+
+<title>Joo Tools</title>
+
+<link rel="stylesheet"
+href="style.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+<div class="brand">
+
+<div class="brand-logo">
+J
+</div>
+
+<div>
+<strong>Joo Tools</strong>
+<span>Utility Studio</span>
+</div>
+
+</div>
+
+<nav>
+
+<button class="nav-item active"
+data-page="home">
+
+<span>⌂</span>
+Home
+
+</button>
+
+<button class="nav-item"
+data-page="favorites">
+
+<span>★</span>
+Favorites
+
+</button>
+
+<button class="nav-item"
+data-page="recent">
+
+<span>◷</span>
+Recent
+
+</button>
+
+</nav>
+
+<div class="sidebar-bottom">
+
+<div class="side-info">
+<span>Joo Tools</span>
+<small>Version 3.0</small>
+</div>
+
+<button id="languageBtn" class="language-btn" type="button">
+    <span class="language-globe">🌐</span>
+    <span id="languageText">العربية</span>
+</button>
+
+<button id="themeBtn"
+class="theme-button">
+
+☀️
+
+</button>
+
+</div>
+
+</aside>
+
+
+<!-- MAIN -->
+
+<main class="main">
+
+<header class="topbar">
+
+<button id="mobileMenu"
+class="mobile-menu">
+☰
+</button>
+
+<div class="page-title">
+
+<span id="pageIcon">⌂</span>
+
+<div>
+<h2 id="pageTitle">
+All Tools
+</h2>
+
+<p id="pageSubtitle">
+Everything you need in one place
+</p>
+</div>
+
+</div>
+
+<div class="top-actions">
+
+<div class="mini-search">
+
+<span>⌕</span>
+
+<input
+id="search"
+placeholder="Search tools...">
+
+</div>
+
+<button
+class="icon-button"
+onclick="showFavorites()">
+
+★
+
+</button>
+
+</div>
+
+</header>
+
+
+<!-- CONTENT -->
+
+<section class="content">
+
+<!-- HERO -->
+
+<div class="hero-card">
+
+<div class="hero-content">
+
+<div class="status">
+<span></span>
+ALL SYSTEMS READY
+</div>
+
+<h1 class="joo-main-brand">
+    <span>Joo Tools</span>
+    <span class="joo-brand-fire">🔥</span>
+    <span class="joo-brand-tools">⚒️</span>
+</h1>
+
+<p>
+A powerful collection of fast browser tools
+designed for everyday tasks, creators and developers.
+</p>
+
+<div class="hero-buttons">
+
+<button
+onclick="document.getElementById('search').focus()"
+class="primary-button">
+
+Explore Tools →
+
+</button>
+
+<button
+onclick="showFavorites()"
+class="secondary-button">
+
+★ Favorites
+
+</button>
+
+</div>
+
+</div>
+
+<div class="hero-decoration">
+
+<div class="orb orb-one"></div>
+<div class="orb orb-two"></div>
+
+<div class="floating-card fc-one">
+🧮
+</div>
+
+<div class="floating-card fc-two">
+🎨
+</div>
+
+<div class="floating-card fc-three">
+🔐
+</div>
+
+</div>
+
+</div>
+
+
+<!-- STATS -->
+
+<div class="stats-grid">
+
+<div class="stat-card">
+
+<div class="stat-icon">🛠️</div>
+
+<div>
+
+<strong id="toolCount">
+0
+</strong>
+
+<span>Total Tools</span>
+
+</div>
+
+</div>
+
+
+<div class="stat-card">
+
+<div class="stat-icon">★</div>
+
+<div>
+
+<strong id="favCount">
+0
+</strong>
+
+<span>Favorites</span>
+
+</div>
+
+</div>
+
+
+<div class="stat-card">
+
+<div class="stat-icon">◷</div>
+
+<div>
+
+<strong id="recentCount">
+0
+</strong>
+
+<span>Recent Tools</span>
+
+</div>
+
+</div>
+
+
+<div class="stat-card">
+
+<div class="stat-icon">⚡</div>
+
+<div>
+
+<strong>100%</strong>
+
+<span>Browser Based</span>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- TOOL AREA -->
+
+<div id="toolSections"></div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<!-- TOOL MODAL -->
+
+<div
+id="toolModal"
+class="tool-modal hidden">
+
+<div class="tool-window">
+
+<div class="tool-header">
+
+<div id="toolHeaderInfo"></div>
+
+<button
+class="close-tool"
+onclick="closeTool()">
+
+×
+
+</button>
+
+</div>
+
+<div
+id="toolArea"
+class="tool-body">
+</div>
+
+</div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+id="toast"
+class="toast">
+
+<span id="toastIcon">✓</span>
+
+<span id="toastText">
+Done
+</span>
+
+</div>
+
+
+<!-- MOBILE NAV -->
+
+<div class="mobile-nav">
+
+<button data-page="home">
+⌂
+<span>Home</span>
+</button>
+
+<button data-page="favorites">
+★
+<span>Favorites</span>
+</button>
+
+<button data-page="recent">
+◷
+<span>Recent</span>
+</button>
+
+</div>
+
+
+<script src="script.js"></script>
+
+
+
+
+</body>
+</html>

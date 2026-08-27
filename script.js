@@ -1,0 +1,6524 @@
+const tools = [
+
+{
+id:"calculator",
+category:"🧮 Calculators",
+icon:"🧮",
+name:"Calculator",
+description:"Fast and clean calculations directly in your browser.",
+run:calculator
+},
+
+{
+id:"percentage",
+category:"🧮 Calculators",
+icon:"📊",
+name:"Percentage Calculator",
+description:"Calculate percentages quickly.",
+run:percentage
+},
+
+{
+id:"average",
+category:"🧮 Calculators",
+icon:"📈",
+name:"Average Calculator",
+description:"Find average, minimum and maximum values.",
+run:averageTool
+},
+
+{
+id:"random-number",
+category:"🎲 Generators",
+icon:"🎲",
+name:"Random Number",
+description:"Generate a random number between two values.",
+run:randomNumber
+},
+
+{
+id:"random-choice",
+category:"🎯 Generators",
+icon:"🎯",
+name:"Random Choice",
+description:"Choose randomly from a list.",
+run:randomChoice
+},
+
+{
+id:"uuid",
+category:"🎲 Generators",
+icon:"🆔",
+name:"UUID Generator",
+description:"Generate unique UUID identifiers.",
+run:uuidGenerator
+},
+
+{
+id:"gradient",
+category:"🎨 Design",
+icon:"🌈",
+name:"Gradient Generator",
+description:"Create beautiful CSS gradients.",
+run:gradientGenerator
+},
+
+{
+id:"palette",
+category:"🎨 Design",
+icon:"🎨",
+name:"Color Palette",
+description:"Generate beautiful color combinations.",
+run:paletteGenerator
+},
+
+{
+id:"text-cleaner",
+category:"📝 Text",
+icon:"🧹",
+name:"Text Cleaner",
+description:"Clean spaces and empty lines.",
+run:textCleaner
+},
+
+{
+id:"text-sorter",
+category:"📝 Text",
+icon:"🔤",
+name:"Text Sorter",
+description:"Sort text lines alphabetically.",
+run:textSorter
+},
+
+{
+id:"duplicate",
+category:"📝 Text",
+icon:"♻️",
+name:"Duplicate Remover",
+description:"Remove duplicate lines.",
+run:duplicateRemover
+},
+
+{
+id:"json",
+category:"💻 Developer",
+icon:"{}",
+name:"JSON Formatter",
+description:"Format and validate JSON.",
+run:jsonFormatter
+},
+
+{
+id:"url",
+category:"💻 Developer",
+icon:"🔗",
+name:"URL Encoder",
+description:"Encode and decode URLs locally.",
+run:urlEncoder
+},
+
+{
+id:"base64",
+category:"💻 Developer",
+icon:"🧬",
+name:"Base64",
+description:"Encode and decode Base64 text.",
+run:base64Tool
+},
+
+{
+id:"base",
+category:"💻 Developer",
+icon:"🔢",
+name:"Base Converter",
+description:"Convert numbers between bases.",
+run:baseConverter
+},
+
+{
+id:"hash",
+category:"🔐 Security",
+icon:"🔐",
+name:"SHA-256 Hash",
+description:"Generate SHA-256 hashes locally.",
+run:hashTool
+},
+
+{
+id:"password",
+category:"🔐 Security",
+icon:"🔑",
+name:"Password Generator",
+description:"Create strong random passwords locally.",
+run:passwordTool
+},
+
+{
+id:"units",
+category:"📏 Converters",
+icon:"📏",
+name:"Unit Converter",
+description:"Convert common measurement units.",
+run:unitTool
+},
+
+{
+id:"roman",
+category:"🔢 Number Tools",
+icon:"🏛️",
+name:"Roman Numerals",
+description:"Convert numbers into Roman numerals.",
+run:romanTool
+},
+
+{
+id:"number-words",
+category:"🔢 Number Tools",
+icon:"🔤",
+name:"Number To Words",
+description:"Convert numbers into English words.",
+run:numberWordsTool
+},
+
+{
+id:"age",
+category:"🧮 Calculators",
+icon:"🎂",
+name:"Age Calculator",
+description:"Calculate age from date of birth.",
+run:ageTool
+},
+
+{
+id:"stopwatch",
+category:"⏱️ Time",
+icon:"⏱️",
+name:"Stopwatch",
+description:"Precise browser stopwatch.",
+run:stopwatch
+},
+
+{
+id:"countdown",
+category:"⏳ Time",
+icon:"⏳",
+name:"Countdown",
+description:"Create a custom countdown.",
+run:countdown
+}
+
+];
+
+let favorites =
+JSON.parse(localStorage.getItem("jooFavorites") || "[]");
+
+let recent =
+JSON.parse(localStorage.getItem("jooRecent") || "[]");
+
+const sections =
+document.getElementById("toolSections");
+
+const search =
+document.getElementById("search");
+
+const modal =
+document.getElementById("toolModal");
+
+const area =
+document.getElementById("toolArea");
+
+const toast =
+document.getElementById("toast");
+
+
+function toolIntro(title, description){
+
+return `
+<div class="tool-intro">
+<h2>${title}</h2>
+<p>${description}</p>
+</div>
+`;
+
+}
+
+
+function resultPanel(id,label="Result"){
+
+return `
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>${label}</strong>
+
+<button
+class="copy-mini"
+onclick="copyElement('${id}')">
+
+COPY
+
+</button>
+
+</div>
+
+<div
+id="${id}"
+class="result-content empty">
+
+Waiting for input...
+
+</div>
+
+</div>
+`;
+
+}
+
+
+function setResult(id,text,type=""){
+
+const el =
+document.getElementById(id);
+
+if(!el)return;
+
+el.className="result-content";
+
+if(type)
+el.classList.add(type);
+
+el.textContent=text;
+
+}
+
+
+function showToast(text,icon="✓"){
+
+document.getElementById("toastText")
+.textContent=text;
+
+document.getElementById("toastIcon")
+.textContent=icon;
+
+toast.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer =
+setTimeout(
+()=>toast.classList.remove("show"),
+2200
+);
+
+}
+
+
+function clearField(id){
+
+const el =
+document.getElementById(id);
+
+if(el)
+el.value="";
+
+showToast("Cleared","✓");
+
+}
+
+
+function copyElement(id){
+
+const el =
+document.getElementById(id);
+
+if(!el){
+
+showToast("Nothing to copy","!");
+
+return;
+
+}
+
+const text =
+el.value !== undefined
+? el.value
+: el.textContent;
+
+if(
+!text ||
+text.includes("Waiting for input")
+){
+
+showToast("Nothing to copy","!");
+
+return;
+
+}
+
+navigator.clipboard
+.writeText(text)
+.then(
+()=>showToast("Copied to clipboard","✓")
+)
+.catch(
+()=>showToast("Copy failed","!")
+);
+
+}
+
+
+function updateStats(){
+
+document.getElementById("toolCount")
+.textContent=tools.length;
+
+document.getElementById("favCount")
+.textContent=favorites.length;
+
+document.getElementById("recentCount")
+.textContent=recent.length;
+
+}
+
+
+function toolCard(tool){
+
+const active =
+favorites.includes(tool.id)
+? "active"
+: "";
+
+return `
+
+<article class="tool-card">
+
+<div class="tool-top">
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<button
+class="favorite ${active}"
+onclick="toggleFavorite('${tool.id}',event)">
+
+★
+
+</button>
+
+</div>
+
+<h3>
+${tool.name}
+</h3>
+
+<p>
+${tool.description}
+</p>
+
+<button
+class="open-button"
+onclick="openTool('${tool.id}')">
+
+Open Tool →
+
+</button>
+
+</article>
+
+`;
+
+}
+
+
+function render(list=tools){
+
+sections.innerHTML="";
+
+const grouped={};
+
+list.forEach(tool=>{
+
+if(!grouped[tool.category])
+grouped[tool.category]=[];
+
+grouped[tool.category].push(tool);
+
+});
+
+Object.entries(grouped).forEach(
+([category,list])=>{
+
+const section =
+document.createElement("section");
+
+section.className="category";
+
+section.innerHTML=`
+
+<div class="category-heading">
+
+<h2>${category}</h2>
+
+<span>${list.length} tools</span>
+
+</div>
+
+<div class="tools">
+
+${list.map(toolCard).join("")}
+
+</div>
+
+`;
+
+sections.appendChild(section);
+
+});
+
+updateStats();
+
+}
+
+
+function toggleFavorite(id,event){
+
+if(event)
+event.stopPropagation();
+
+if(favorites.includes(id)){
+
+favorites =
+favorites.filter(x=>x!==id);
+
+showToast(
+"Removed from favorites",
+"☆"
+);
+
+}else{
+
+favorites.push(id);
+
+showToast(
+"Added to favorites",
+"★"
+);
+
+}
+
+localStorage.setItem(
+"jooFavorites",
+JSON.stringify(favorites)
+);
+
+render();
+
+}
+
+
+function showFavorites(){
+
+const list =
+tools.filter(
+x=>favorites.includes(x.id)
+);
+
+document.getElementById("pageTitle")
+.textContent="Favorites";
+
+document.getElementById("pageSubtitle")
+.textContent="Your saved tools";
+
+document.getElementById("pageIcon")
+.textContent="★";
+
+if(!list.length){
+
+sections.innerHTML=`
+
+<div class="empty-state">
+
+<div class="empty-state-icon">
+★
+</div>
+
+<h3>No favorites yet</h3>
+
+<p>
+Tap the star on any tool to save it here.
+</p>
+
+</div>
+
+`;
+
+updateStats();
+
+return;
+
+}
+
+render(list);
+
+}
+
+
+function showRecent(){
+
+const list =
+recent
+.map(id=>tools.find(x=>x.id===id))
+.filter(Boolean);
+
+document.getElementById("pageTitle")
+.textContent="Recent";
+
+document.getElementById("pageSubtitle")
+.textContent="Your recently used tools";
+
+document.getElementById("pageIcon")
+.textContent="◷";
+
+if(!list.length){
+
+sections.innerHTML=`
+
+<div class="empty-state">
+
+<div class="empty-state-icon">
+◷
+</div>
+
+<h3>No recent tools</h3>
+
+<p>
+Tools you use will appear here.
+</p>
+
+</div>
+
+`;
+
+updateStats();
+
+return;
+
+}
+
+render(list);
+
+}
+
+
+function goHome(){
+
+document.getElementById("pageTitle")
+.textContent="All Tools";
+
+document.getElementById("pageSubtitle")
+.textContent=
+"Everything you need in one place";
+
+document.getElementById("pageIcon")
+.textContent="⌂";
+
+search.value="";
+
+render();
+
+}
+
+
+search.addEventListener(
+"input",
+()=>{
+
+const q =
+search.value.trim().toLowerCase();
+
+if(!q){
+
+render();
+
+return;
+
+}
+
+const result =
+tools.filter(tool=>
+
+tool.name.toLowerCase()
+.includes(q)
+
+||
+
+tool.description
+.toLowerCase()
+.includes(q)
+
+||
+
+tool.category
+.toLowerCase()
+.includes(q)
+
+);
+
+render(result);
+
+}
+);
+
+
+function openTool(id){
+
+const tool =
+tools.find(x=>x.id===id);
+
+if(!tool)return;
+
+recent=[
+id,
+...recent.filter(x=>x!==id)
+].slice(0,8);
+
+localStorage.setItem(
+"jooRecent",
+JSON.stringify(recent)
+);
+
+document.getElementById(
+"toolHeaderInfo"
+).innerHTML=`
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<div>
+
+<div class="tool-title">
+${tool.name}
+</div>
+
+<div class="tool-subtitle">
+${tool.category}
+</div>
+
+</div>
+
+`;
+
+area.innerHTML=`
+
+<div class="tool-ui">
+
+${tool.run()}
+
+</div>
+
+`;
+
+modal.classList.remove("hidden");
+
+updateStats();
+
+}
+
+
+function closeTool(){
+
+modal.classList.add("hidden");
+
+area.innerHTML="";
+
+}
+
+
+modal.addEventListener(
+"click",
+event=>{
+
+if(event.target===modal)
+closeTool();
+
+});
+
+
+document.addEventListener(
+"keydown",
+event=>{
+
+if(event.key==="Escape")
+closeTool();
+
+});
+
+
+document.querySelectorAll(
+".nav-item,.mobile-nav button"
+).forEach(button=>{
+
+button.addEventListener(
+"click",
+()=>{
+
+const page=button.dataset.page;
+
+if(page==="home")
+goHome();
+
+if(page==="favorites")
+showFavorites();
+
+if(page==="recent")
+showRecent();
+
+if(
+window.innerWidth<=850
+){
+
+document
+.querySelector(".sidebar")
+.classList
+.remove("open");
+
+}
+
+}
+);
+
+});
+
+
+document.getElementById(
+"mobileMenu"
+).addEventListener(
+"click",
+()=>{
+
+document
+.querySelector(".sidebar")
+.classList
+.toggle("open");
+
+});
+
+
+document.getElementById(
+"themeBtn"
+).addEventListener(
+"click",
+()=>{
+
+document.body
+.classList
+.toggle("light");
+
+const light =
+document.body
+.classList
+.contains("light");
+
+document.getElementById(
+"themeBtn"
+).textContent =
+light ? "🌙" : "☀️";
+
+localStorage.setItem(
+"jooTheme",
+light ? "light" : "dark"
+);
+
+});
+
+
+function calculate(){
+
+const value =
+document.getElementById("calc").value;
+
+if(
+!/^[0-9+*/().%\- \t]+$/.test(value)
+){
+
+setResult(
+"calcResult",
+"Invalid expression.",
+"error"
+);
+
+return;
+
+}
+
+try{
+
+const result =
+Function(
+'"use strict";return ('+
+value+
+')'
+)();
+
+setResult(
+"calcResult",
+String(result),
+"success"
+);
+
+showToast(
+"Calculation complete"
+);
+
+}catch{
+
+setResult(
+"calcResult",
+"Invalid calculation.",
+"error"
+);
+
+}
+
+}
+
+
+function calculator(){
+
+return `
+
+${toolIntro(
+"Calculator",
+"Fast and clean calculations directly in your browser."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Calculation
+<span>Example: 25 * 4 + 10</span>
+</label>
+
+<input
+id="calc"
+inputmode="decimal"
+placeholder="Enter an expression...">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculate()">
+
+Calculate
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('calc')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"calcResult",
+"Calculation Result"
+)}
+
+`;
+
+}
+
+
+function calculatePercentage(){
+
+const a =
+Number(
+document.getElementById(
+"percentValue"
+).value
+);
+
+const b =
+Number(
+document.getElementById(
+"percentRate"
+).value
+);
+
+if(!Number.isFinite(a)||!Number.isFinite(b)){
+
+showToast("Enter valid numbers","!");
+
+return;
+
+}
+
+document.getElementById(
+"percentageResult"
+).textContent =
+(a*b/100).toLocaleString();
+
+}
+
+
+function percentage(){
+
+return `
+
+${toolIntro(
+"Percentage Calculator",
+"Calculate percentages quickly."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="percentValue"
+type="number"
+placeholder="100">
+
+</div>
+
+<div class="field">
+
+<label>Percentage</label>
+
+<input
+id="percentRate"
+type="number"
+placeholder="20">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculatePercentage()">
+
+Calculate
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Result</strong>
+
+<span>Percentage</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="percentageResult"
+class="big-result-value">
+
+0
+
+</div>
+
+<div class="big-result-label">
+Calculated result
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function averageTool(){
+
+return `
+
+${toolIntro(
+"Average Calculator",
+"Calculate average, minimum, maximum and sum."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Numbers
+<span>Comma or space separated</span>
+</label>
+
+<textarea
+id="averageNumbers"
+placeholder="10, 20, 30, 40"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculateAverage()">
+
+Calculate Statistics
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"averageResult",
+"Statistics"
+)}
+
+`;
+
+}
+
+
+function calculateAverage(){
+
+const numbers =
+document.getElementById(
+"averageNumbers"
+)
+.value
+.split(/[,\s]+/)
+.map(Number)
+.filter(Number.isFinite);
+
+if(!numbers.length){
+
+setResult(
+"averageResult",
+"Enter at least one number.",
+"error"
+);
+
+return;
+
+}
+
+const sum =
+numbers.reduce(
+(a,b)=>a+b,
+0
+);
+
+const avg =
+sum/numbers.length;
+
+setResult(
+"averageResult",
+
+`Count: ${numbers.length}
+Sum: ${sum}
+Average: ${avg}
+Minimum: ${Math.min(...numbers)}
+Maximum: ${Math.max(...numbers)}`,
+
+"success"
+);
+
+}
+
+
+function generateRandom(){
+
+const min =
+Number(
+document.getElementById("min").value
+);
+
+const max =
+Number(
+document.getElementById("max").value
+);
+
+if(
+!Number.isFinite(min) ||
+!Number.isFinite(max) ||
+max<min
+){
+
+showToast(
+"Check the range",
+"!"
+);
+
+return;
+
+}
+
+document.getElementById(
+"randomResult"
+).textContent =
+Math.floor(
+Math.random()*(max-min+1)
+)+min;
+
+}
+
+
+function randomNumber(){
+
+return `
+
+${toolIntro(
+"Random Number",
+"Generate a random integer between any two numbers."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Minimum</label>
+
+<input
+id="min"
+type="number"
+value="1">
+
+</div>
+
+<div class="field">
+
+<label>Maximum</label>
+
+<input
+id="max"
+type="number"
+value="100">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateRandom()">
+
+Generate Number
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Generated Number</strong>
+
+<span>Random</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="randomResult"
+class="big-result-value">
+
+—
+
+</div>
+
+<div class="big-result-label">
+Your random number
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function chooseRandom(){
+
+const values =
+document.getElementById(
+"choices"
+)
+.value
+.split("\n")
+.map(x=>x.trim())
+.filter(Boolean);
+
+if(!values.length){
+
+showToast(
+"Enter some choices",
+"!"
+);
+
+return;
+
+}
+
+setResult(
+"choiceResult",
+values[
+Math.floor(
+Math.random()*values.length
+)
+],
+"success"
+);
+
+}
+
+
+function randomChoice(){
+
+return `
+
+${toolIntro(
+"Random Choice",
+"Let Joo Tools choose one item from your list."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Choices
+<span>One choice per line</span>
+</label>
+
+<textarea
+id="choices"
+placeholder="Pizza
+Burger
+Pasta
+Chicken"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="chooseRandom()">
+
+Choose Randomly
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"choiceResult",
+"Selected Choice"
+)}
+
+`;
+
+}
+
+
+function generateUUID(){
+
+setResult(
+"uuidResult",
+crypto.randomUUID(),
+"success"
+);
+
+}
+
+
+function uuidGenerator(){
+
+return `
+
+${toolIntro(
+"UUID Generator",
+"Generate unique identifiers instantly."
+)}
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateUUID()">
+
+Generate UUID
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('uuidResult')">
+
+Copy
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"uuidResult",
+"Generated UUID"
+)}
+
+`;
+
+}
+
+
+function randomColor(){
+
+return "#"+
+Math.floor(
+Math.random()*16777215
+)
+.toString(16)
+.padStart(6,"0");
+
+}
+
+
+function generateGradient(){
+
+const a=randomColor();
+const b=randomColor();
+
+const gradient =
+`linear-gradient(135deg, ${a}, ${b})`;
+
+document.getElementById(
+"gradientBox"
+).style.background =
+gradient;
+
+document.getElementById(
+"gradientPreviewText"
+).textContent =
+gradient;
+
+setResult(
+"gradientResult",
+gradient,
+"success"
+);
+
+}
+
+
+function gradientGenerator(){
+
+return `
+
+${toolIntro(
+"Gradient Generator",
+"Create modern CSS gradients and copy the generated code."
+)}
+
+<div
+id="gradientBox"
+class="color-preview"
+style="
+background:
+linear-gradient(
+135deg,
+#7c5cff,
+#00d4ff
+);
+">
+
+<div
+class="color-preview-info"
+id="gradientPreviewText">
+
+linear-gradient(135deg,#7c5cff,#00d4ff)
+
+</div>
+
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateGradient()">
+
+Generate Gradient
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('gradientResult')">
+
+Copy CSS
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"gradientResult",
+"CSS Gradient"
+)}
+
+`;
+
+}
+
+
+function generatePalette(){
+
+const box =
+document.getElementById(
+"paletteResult"
+);
+
+box.innerHTML="";
+
+for(let i=0;i<5;i++){
+
+const color =
+randomColor();
+
+const item =
+document.createElement("div");
+
+item.className =
+"palette-color";
+
+item.style.background =
+color;
+
+item.innerHTML =
+`<span>${color.toUpperCase()}</span>`;
+
+item.onclick=()=>{
+
+navigator.clipboard
+.writeText(color);
+
+showToast(
+"Color copied",
+"✓"
+);
+
+};
+
+box.appendChild(item);
+
+}
+
+}
+
+
+function paletteGenerator(){
+
+return `
+
+${toolIntro(
+"Color Palette",
+"Generate a five-color palette and copy colors instantly."
+)}
+
+<div
+id="paletteResult"
+class="palette-grid">
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generatePalette()">
+
+Generate Palette
+
+</button>
+
+</div>
+
+</div>
+
+<div class="tool-status">
+
+<span class="tool-status-dot"></span>
+
+Click any color to copy its HEX value
+
+</div>
+
+`;
+
+}
+
+
+function cleanTextSpaces(){
+
+const el =
+document.getElementById(
+"cleanerText"
+);
+
+el.value =
+el.value
+.replace(/[ \t]+/g," ")
+.trim();
+
+}
+
+
+function cleanEmptyLines(){
+
+const el =
+document.getElementById(
+"cleanerText"
+);
+
+el.value =
+el.value
+.split("\n")
+.filter(x=>x.trim())
+.join("\n");
+
+}
+
+
+function cleanAllText(){
+
+cleanTextSpaces();
+
+cleanEmptyLines();
+
+showToast(
+"Text cleaned",
+"✓"
+);
+
+}
+
+
+function textCleaner(){
+
+return `
+
+${toolIntro(
+"Text Cleaner",
+"Clean messy text and organize your content."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input Text
+<span>Paste your text</span>
+</label>
+
+<textarea
+id="cleanerText"
+placeholder="Paste your text here..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="cleanAllText()">
+
+Clean All
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="cleanTextSpaces()">
+
+Spaces
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="cleanEmptyLines()">
+
+Empty Lines
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('cleanerText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function sortText(reverse=false){
+
+const el =
+document.getElementById(
+"sortText"
+);
+
+let lines =
+el.value
+.split("\n")
+.filter(Boolean);
+
+lines.sort(
+(a,b)=>a.localeCompare(b)
+);
+
+if(reverse)
+lines.reverse();
+
+el.value =
+lines.join("\n");
+
+}
+
+
+function textSorter(){
+
+return `
+
+${toolIntro(
+"Text Sorter",
+"Sort lines alphabetically in either direction."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Text
+<span>One item per line</span>
+</label>
+
+<textarea
+id="sortText"
+placeholder="Apple
+Banana
+Orange"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="sortText()">
+
+A → Z
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="sortText(true)">
+
+Z → A
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function removeDuplicates(){
+
+const el =
+document.getElementById(
+"duplicateText"
+);
+
+el.value =
+[
+...new Set(
+el.value
+.split("\n")
+)
+]
+.join("\n");
+
+showToast(
+"Duplicates removed",
+"✓"
+);
+
+}
+
+
+function duplicateRemover(){
+
+return `
+
+${toolIntro(
+"Duplicate Remover",
+"Remove repeated lines instantly."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Text
+<span>One item per line</span>
+</label>
+
+<textarea
+id="duplicateText"
+placeholder="Apple
+Apple
+Orange
+Banana
+Orange"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="removeDuplicates()">
+
+Remove Duplicates
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('duplicateText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function formatJSON(){
+
+try{
+
+const obj =
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+setResult(
+"jsonResult",
+JSON.stringify(
+obj,
+null,
+2
+),
+"success"
+);
+
+}catch{
+
+setResult(
+"jsonResult",
+"Invalid JSON.",
+"error"
+);
+
+}
+
+}
+
+
+function minifyJSON(){
+
+try{
+
+const obj =
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+setResult(
+"jsonResult",
+JSON.stringify(obj),
+"success"
+);
+
+}catch{
+
+setResult(
+"jsonResult",
+"Invalid JSON.",
+"error"
+);
+
+}
+
+}
+
+
+function jsonFormatter(){
+
+return `
+
+${toolIntro(
+"JSON Formatter",
+"Format, minify and validate JSON."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+JSON Input
+<span>Valid JSON required</span>
+</label>
+
+<textarea
+id="jsonText"
+class="code-result"
+placeholder='{
+  "name": "Joo",
+  "version": 4
+}'></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="formatJSON()">
+
+Format JSON
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="minifyJSON()">
+
+Minify
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('jsonText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"jsonResult",
+"Formatted Output"
+)}
+
+`;
+
+}
+
+
+function encodeURL(){
+
+setResult(
+"urlResult",
+encodeURIComponent(
+document.getElementById(
+"urlText"
+).value
+),
+"success"
+);
+
+}
+
+
+function decodeURL(){
+
+try{
+
+setResult(
+"urlResult",
+decodeURIComponent(
+document.getElementById(
+"urlText"
+).value
+),
+"success"
+);
+
+}catch{
+
+setResult(
+"urlResult",
+"Invalid encoded URL.",
+"error"
+);
+
+}
+
+}
+
+
+function urlEncoder(){
+
+return `
+
+${toolIntro(
+"URL Encoder / Decoder",
+"Encode and decode URL text locally."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input
+</label>
+
+<textarea
+id="urlText"
+placeholder="https://example.com/hello world"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="encodeURL()">
+
+Encode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="decodeURL()">
+
+Decode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('urlText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"urlResult",
+"Output"
+)}
+
+`;
+
+}
+
+
+function encodeBase64(){
+
+const text =
+document.getElementById(
+"base64Input"
+).value;
+
+const bytes =
+new TextEncoder()
+.encode(text);
+
+let binary="";
+
+bytes.forEach(
+b=>binary+=
+String.fromCharCode(b)
+);
+
+setResult(
+"base64Result",
+btoa(binary),
+"success"
+);
+
+}
+
+
+function decodeBase64(){
+
+try{
+
+const binary =
+atob(
+document.getElementById(
+"base64Input"
+).value
+);
+
+const bytes =
+Uint8Array.from(
+binary,
+x=>x.charCodeAt(0)
+);
+
+setResult(
+"base64Result",
+new TextDecoder()
+.decode(bytes),
+"success"
+);
+
+}catch{
+
+setResult(
+"base64Result",
+"Invalid Base64.",
+"error"
+);
+
+}
+
+}
+
+
+function base64Tool(){
+
+return `
+
+${toolIntro(
+"Base64 Encoder / Decoder",
+"Encode or decode text without uploading anything."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input
+<span>Text / Base64</span>
+</label>
+
+<textarea
+id="base64Input"
+placeholder="Enter your text..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="encodeBase64()">
+
+Encode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="decodeBase64()">
+
+Decode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('base64Input')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"base64Result",
+"Output"
+)}
+
+`;
+
+}
+
+
+function convertBase(){
+
+const value =
+document.getElementById(
+"baseNumber"
+).value;
+
+const from =
+Number(
+document.getElementById(
+"fromBase"
+).value
+);
+
+const to =
+Number(
+document.getElementById(
+"toBase"
+).value
+);
+
+const decimal =
+parseInt(
+value,
+from
+);
+
+if(
+isNaN(decimal) ||
+from<2 ||
+from>36 ||
+to<2 ||
+to>36
+){
+
+setResult(
+"baseResult",
+"Invalid number or base.",
+"error"
+);
+
+return;
+
+}
+
+setResult(
+"baseResult",
+decimal
+.toString(to)
+.toUpperCase(),
+"success"
+);
+
+}
+
+
+function baseConverter(){
+
+return `
+
+${toolIntro(
+"Base Converter",
+"Convert numbers between bases 2 and 36."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="baseNumber"
+placeholder="FF">
+
+</div>
+
+<div class="field">
+
+<label>From Base</label>
+
+<input
+id="fromBase"
+type="number"
+min="2"
+max="36"
+value="16">
+
+</div>
+
+<div class="field">
+
+<label>To Base</label>
+
+<input
+id="toBase"
+type="number"
+min="2"
+max="36"
+value="10">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertBase()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"baseResult",
+"Converted Value"
+)}
+
+`;
+
+}
+
+
+async function generateSHA256(){
+
+const data =
+new TextEncoder()
+.encode(
+document.getElementById(
+"hashText"
+).value
+);
+
+const hash =
+await crypto.subtle.digest(
+"SHA-256",
+data
+);
+
+const hex =
+[...new Uint8Array(hash)]
+.map(
+b=>b.toString(16).padStart(2,"0")
+)
+.join("");
+
+setResult(
+"hashResult",
+hex,
+"success"
+);
+
+}
+
+
+function hashTool(){
+
+return `
+
+${toolIntro(
+"SHA-256 Hash",
+"Generate a SHA-256 hash directly in your browser."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Text</label>
+
+<textarea
+id="hashText"
+placeholder="Enter text to hash..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateSHA256()">
+
+Generate Hash
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('hashText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"hashResult",
+"SHA-256 Result"
+)}
+
+`;
+
+}
+
+
+function generatePassword(){
+
+const length =
+Number(
+document.getElementById(
+"passwordLength"
+).value
+);
+
+const chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+"abcdefghijklmnopqrstuvwxyz"+
+"0123456789"+
+"!@#$%^&*()_+-=[]{}";
+
+const array =
+new Uint32Array(length);
+
+crypto.getRandomValues(array);
+
+let password="";
+
+for(let i=0;i<length;i++){
+
+password +=
+chars[
+array[i]%chars.length
+];
+
+}
+
+setResult(
+"passwordResult",
+password,
+"success"
+);
+
+}
+
+
+function passwordTool(){
+
+return `
+
+${toolIntro(
+"Password Generator",
+"Generate strong random passwords locally."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Password Length
+<span id="lengthLabel">20</span>
+</label>
+
+<div class="range-wrap">
+
+<input
+id="passwordLength"
+type="range"
+min="8"
+max="64"
+value="20"
+oninput="
+document.getElementById('lengthLabel').textContent=this.value;
+document.getElementById('rangeValue').textContent=this.value;
+">
+
+<div
+id="rangeValue"
+class="range-value">
+
+20
+
+</div>
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generatePassword()">
+
+Generate Password
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('passwordResult')">
+
+Copy
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"passwordResult",
+"Generated Password"
+)}
+
+`;
+
+}
+
+
+function convertUnit(){
+
+const value =
+Number(
+document.getElementById(
+"unitValue"
+).value
+);
+
+const type =
+document.getElementById(
+"unitType"
+).value;
+
+const map={
+
+"km-m":value=>value*1000,
+"m-km":value=>value/1000,
+"m-cm":value=>value*100,
+"cm-m":value=>value/100,
+"kg-g":value=>value*1000,
+"g-kg":value=>value/1000,
+"lb-kg":value=>value*.45359237,
+"kg-lb":value=>value*2.20462262
+
+};
+
+if(!map[type])return;
+
+setResult(
+"unitResult",
+String(map[type](value)),
+"success"
+);
+
+}
+
+
+function unitTool(){
+
+return `
+
+${toolIntro(
+"Unit Converter",
+"Convert common measurements instantly."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Value</label>
+
+<input
+id="unitValue"
+type="number"
+placeholder="100">
+
+</div>
+
+<div class="field">
+
+<label>Conversion</label>
+
+<select id="unitType">
+
+<option value="km-m">
+Kilometers → Meters
+</option>
+
+<option value="m-km">
+Meters → Kilometers
+</option>
+
+<option value="m-cm">
+Meters → Centimeters
+</option>
+
+<option value="cm-m">
+Centimeters → Meters
+</option>
+
+<option value="kg-g">
+Kilograms → Grams
+</option>
+
+<option value="g-kg">
+Grams → Kilograms
+</option>
+
+<option value="lb-kg">
+Pounds → Kilograms
+</option>
+
+<option value="kg-lb">
+Kilograms → Pounds
+</option>
+
+</select>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertUnit()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"unitResult",
+"Converted Value"
+)}
+
+`;
+
+}
+
+
+function convertToRoman(){
+
+let n =
+Number(
+document.getElementById(
+"romanNumber"
+).value
+);
+
+if(
+!Number.isInteger(n) ||
+n<1 ||
+n>3999
+){
+
+showToast(
+"Enter a number from 1 to 3999",
+"!"
+);
+
+return;
+
+}
+
+const values=[
+[1000,"M"],
+[900,"CM"],
+[500,"D"],
+[400,"CD"],
+[100,"C"],
+[90,"XC"],
+[50,"L"],
+[40,"XL"],
+[10,"X"],
+[9,"IX"],
+[5,"V"],
+[4,"IV"],
+[1,"I"]
+];
+
+let result="";
+
+for(
+const [v,s]
+of values
+){
+
+while(n>=v){
+
+result+=s;
+n-=v;
+
+}
+
+}
+
+setResult(
+"romanResult",
+result,
+"success"
+);
+
+}
+
+
+function romanTool(){
+
+return `
+
+${toolIntro(
+"Roman Numerals",
+"Convert numbers from 1 to 3999 into Roman numerals."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="romanNumber"
+type="number"
+min="1"
+max="3999"
+placeholder="2026">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertToRoman()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"romanResult",
+"Roman Numeral"
+)}
+
+`;
+
+}
+
+
+function numberToWords(n){
+
+const ones=[
+"zero","one","two","three","four",
+"five","six","seven","eight","nine",
+"ten","eleven","twelve","thirteen",
+"fourteen","fifteen","sixteen",
+"seventeen","eighteen","nineteen"
+];
+
+const tens=[
+"","","twenty","thirty","forty",
+"fifty","sixty","seventy","eighty","ninety"
+];
+
+if(n<20)
+return ones[n];
+
+if(n<100)
+return tens[
+Math.floor(n/10)
+]+
+(n%10?
+" "+ones[n%10]:"");
+
+if(n<1000)
+return ones[
+Math.floor(n/100)
+]+
+" hundred"+
+(n%100?
+" "+numberToWords(n%100):
+"");
+
+if(n<1000000)
+return numberToWords(
+Math.floor(n/1000)
+)+
+" thousand"+
+(n%1000?
+" "+numberToWords(n%1000):
+"");
+
+return numberToWords(
+Math.floor(n/1000000)
+)+
+" million"+
+(n%1000000?
+" "+numberToWords(n%1000000):
+"");
+
+}
+
+
+function convertNumberWords(){
+
+const n =
+Number(
+document.getElementById(
+"wordsNumber"
+).value
+);
+
+if(
+!Number.isInteger(n) ||
+n<0 ||
+n>999999999
+){
+
+showToast(
+"Enter a number from 0 to 999999999",
+"!"
+);
+
+return;
+
+}
+
+setResult(
+"wordsResult",
+numberToWords(n),
+"success"
+);
+
+}
+
+
+function numberWordsTool(){
+
+return `
+
+${toolIntro(
+"Number To Words",
+"Convert numbers into English words."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="wordsNumber"
+type="number"
+min="0"
+max="999999999"
+placeholder="2026">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertNumberWords()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"wordsResult",
+"Words"
+)}
+
+`;
+
+}
+
+
+function calculateAge(){
+
+const value =
+document.getElementById(
+"birthDate"
+).value;
+
+if(!value){
+
+showToast(
+"Select your birth date",
+"!"
+);
+
+return;
+
+}
+
+const birth =
+new Date(
+value+"T00:00:00"
+);
+
+const today =
+new Date();
+
+let years =
+today.getFullYear()-
+birth.getFullYear();
+
+let months =
+today.getMonth()-
+birth.getMonth();
+
+let days =
+today.getDate()-
+birth.getDate();
+
+if(days<0){
+
+months--;
+
+days +=
+new Date(
+today.getFullYear(),
+today.getMonth(),
+0
+).getDate();
+
+}
+
+if(months<0){
+
+years--;
+
+months+=12;
+
+}
+
+setResult(
+"ageResult",
+`${years} years, ${months} months, ${days} days`,
+"success"
+);
+
+}
+
+
+function ageTool(){
+
+return `
+
+${toolIntro(
+"Age Calculator",
+"Calculate your age precisely from your birth date."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Date of Birth</label>
+
+<input
+id="birthDate"
+type="date">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculateAge()">
+
+Calculate Age
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"ageResult",
+"Your Age"
+)}
+
+`;
+
+}
+
+
+let stopwatchTimer=null;
+let stopwatchSeconds=0;
+
+function startStopwatch(){
+
+if(stopwatchTimer)
+return;
+
+stopwatchTimer =
+setInterval(()=>{
+
+stopwatchSeconds++;
+
+const h =
+Math.floor(
+stopwatchSeconds/3600
+);
+
+const m =
+Math.floor(
+(stopwatchSeconds%3600)/60
+);
+
+const s =
+stopwatchSeconds%60;
+
+const display =
+document.getElementById(
+"stopwatchDisplay"
+);
+
+if(display){
+
+display.textContent =
+`${String(h).padStart(2,"0")}:`+
+`${String(m).padStart(2,"0")}:`+
+`${String(s).padStart(2,"0")}`;
+
+}
+
+},1000);
+
+}
+
+
+function pauseStopwatch(){
+
+clearInterval(
+stopwatchTimer
+);
+
+stopwatchTimer=null;
+
+}
+
+
+function resetStopwatch(){
+
+pauseStopwatch();
+
+stopwatchSeconds=0;
+
+const display =
+document.getElementById(
+"stopwatchDisplay"
+);
+
+if(display)
+display.textContent=
+"00:00:00";
+
+}
+
+
+function stopwatch(){
+
+return `
+
+${toolIntro(
+"Stopwatch",
+"Precise browser-based stopwatch."
+)}
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Timer</strong>
+
+<span>Live</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="stopwatchDisplay"
+class="big-result-value">
+
+00:00:00
+
+</div>
+
+</div>
+
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="startStopwatch()">
+
+Start
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="pauseStopwatch()">
+
+Pause
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="resetStopwatch()">
+
+Reset
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+let countdownTimer=null;
+
+function updateCountdown(seconds){
+
+const m =
+Math.floor(seconds/60);
+
+const s =
+seconds%60;
+
+const display =
+document.getElementById(
+"countdownResult"
+);
+
+if(display){
+
+display.textContent =
+`${String(m).padStart(2,"0")}:`+
+`${String(s).padStart(2,"0")}`;
+
+}
+
+}
+
+
+function startCountdown(){
+
+let seconds =
+Number(
+document.getElementById(
+"countdownSeconds"
+).value
+);
+
+if(
+!Number.isInteger(seconds) ||
+seconds<=0
+){
+
+showToast(
+"Enter valid seconds",
+"!"
+);
+
+return;
+
+}
+
+clearInterval(
+countdownTimer
+);
+
+updateCountdown(seconds);
+
+countdownTimer =
+setInterval(()=>{
+
+seconds--;
+
+updateCountdown(seconds);
+
+if(seconds<=0){
+
+clearInterval(
+countdownTimer
+);
+
+showToast(
+"Countdown finished",
+"✓"
+);
+
+}
+
+},1000);
+
+}
+
+
+function stopCountdown(){
+
+clearInterval(
+countdownTimer
+);
+
+countdownTimer=null;
+
+}
+
+
+function countdown(){
+
+return `
+
+${toolIntro(
+"Countdown",
+"Create a simple countdown timer."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Seconds</label>
+
+<input
+id="countdownSeconds"
+type="number"
+min="1"
+placeholder="60">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="startCountdown()">
+
+Start
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="stopCountdown()">
+
+Stop
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Remaining</strong>
+
+<span>Timer</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="countdownResult"
+class="big-result-value">
+
+00:00
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+/* =========================================
+   THEME
+========================================= */
+
+(function(){
+
+const saved =
+localStorage.getItem(
+"jooTheme"
+);
+
+if(saved==="light"){
+
+document.body
+.classList
+.add("light");
+
+const btn =
+document.getElementById(
+"themeBtn"
+);
+
+if(btn)
+btn.textContent="🌙";
+
+}
+
+})();
+
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+render();
+
+
+/* =========================================
+   JOO TOOLS - COMPLETE LANGUAGE SYSTEM
+========================================= */
+
+const JOO_LANG = {
+
+en: {
+    dir:"ltr",
+    lang:"en",
+    language:"العربية",
+    search:"Search tools...",
+    allTools:"All Tools",
+    favorites:"Favorites",
+    recent:"Recent",
+    everything:"Everything you need in one place",
+    saved:"Your saved tools",
+    recently:"Your recently used tools",
+    tools:"tools",
+    open:"Open Tool →",
+    noFavorites:"No favorites yet",
+    noFavoritesText:"Tap the star on any tool to save it here.",
+    noRecent:"No recent tools",
+    noRecentText:"Tools you use will appear here.",
+    clear:"Clear",
+    calculate:"Calculate",
+    copy:"Copy",
+    generate:"Generate",
+    convert:"Convert",
+    input:"Input",
+    output:"Output",
+    result:"Result"
+},
+
+ar: {
+    dir:"rtl",
+    lang:"ar",
+    language:"English",
+    search:"ابحث عن أداة...",
+    allTools:"كل الأدوات",
+    favorites:"المفضلة",
+    recent:"الأخيرة",
+    everything:"كل ما تحتاجه في مكان واحد",
+    saved:"الأدوات المحفوظة لديك",
+    recently:"الأدوات التي استخدمتها مؤخرًا",
+    tools:"أداة",
+    open:"فتح الأداة ←",
+    noFavorites:"لا توجد أدوات مفضلة",
+    noFavoritesText:"اضغط على النجمة بجانب أي أداة لإضافتها هنا.",
+    noRecent:"لا توجد أدوات حديثة",
+    noRecentText:"الأدوات التي تستخدمها ستظهر هنا.",
+    clear:"مسح",
+    calculate:"احسب",
+    copy:"نسخ",
+    generate:"توليد",
+    convert:"تحويل",
+    input:"الإدخال",
+    output:"الإخراج",
+    result:"النتيجة"
+}
+
+};
+
+const JOO_TOOLS_AR = {
+
+"Calculator":{
+name:"آلة حاسبة",
+description:"إجراء العمليات الحسابية بسرعة وسهولة داخل المتصفح."
+},
+
+"Percentage Calculator":{
+name:"حاسبة النسبة المئوية",
+description:"احسب النسب المئوية بسهولة وسرعة."
+},
+
+"Average Calculator":{
+name:"حاسبة المتوسط",
+description:"احسب المتوسط والقيمة الأصغر والأكبر والمجموع."
+},
+
+"Random Number":{
+name:"رقم عشوائي",
+description:"توليد رقم عشوائي بين رقمين."
+},
+
+"Random Choice":{
+name:"اختيار عشوائي",
+description:"اختر عنصرًا عشوائيًا من قائمة."
+},
+
+"UUID Generator":{
+name:"مولد UUID",
+description:"توليد معرفات UUID فريدة."
+},
+
+"Gradient Generator":{
+name:"مولد التدرجات",
+description:"أنشئ تدرجات CSS احترافية بسهولة."
+},
+
+"Color Palette":{
+name:"لوحة الألوان",
+description:"أنشئ مجموعات ألوان متناسقة وجميلة."
+},
+
+"Text Cleaner":{
+name:"منظف النصوص",
+description:"تنظيف المسافات والأسطر الفارغة من النص."
+},
+
+"Text Sorter":{
+name:"ترتيب النصوص",
+description:"ترتيب أسطر النص أبجديًا."
+},
+
+"Duplicate Remover":{
+name:"إزالة التكرار",
+description:"إزالة الأسطر المتكررة من النص."
+},
+
+"JSON Formatter":{
+name:"منسق JSON",
+description:"تنسيق والتحقق من JSON."
+},
+
+"URL Encoder":{
+name:"ترميز URL",
+description:"ترميز وفك ترميز روابط URL محليًا."
+},
+
+"Base64":{
+name:"Base64",
+description:"ترميز وفك ترميز النص باستخدام Base64."
+},
+
+"Base Converter":{
+name:"محول الأنظمة العددية",
+description:"تحويل الأرقام بين الأنظمة من 2 إلى 36."
+},
+
+"SHA-256 Hash":{
+name:"تجزئة SHA-256",
+description:"إنشاء Hash من نوع SHA-256 مباشرة داخل المتصفح."
+},
+
+"Password Generator":{
+name:"مولد كلمات المرور",
+description:"إنشاء كلمات مرور قوية وعشوائية."
+},
+
+"Unit Converter":{
+name:"محول الوحدات",
+description:"تحويل وحدات القياس الشائعة بسهولة."
+},
+
+"Roman Numerals":{
+name:"الأرقام الرومانية",
+description:"تحويل الأرقام إلى أرقام رومانية."
+},
+
+"Number To Words":{
+name:"تحويل الرقم إلى كلمات",
+description:"تحويل الأرقام إلى كلمات باللغة الإنجليزية."
+},
+
+"Age Calculator":{
+name:"حاسبة العمر",
+description:"حساب العمر بدقة من تاريخ الميلاد."
+},
+
+"Stopwatch":{
+name:"ساعة الإيقاف",
+description:"ساعة إيقاف دقيقة تعمل مباشرة في المتصفح."
+},
+
+"Countdown":{
+name:"العد التنازلي",
+description:"إنشاء مؤقت للعد التنازلي."
+}
+
+};
+
+const JOO_CATEGORY_AR = {
+"🧮 Calculators":"🧮 الحاسبات",
+"🎲 Generators":"🎲 المولدات",
+"🎨 Design":"🎨 التصميم",
+"📝 Text":"📝 النصوص",
+"💻 Developer":"💻 المطورين",
+"🔐 Security":"🔐 الأمان",
+"📏 Converters":"📏 المحولات",
+"🔢 Number Tools":"🔢 أدوات الأرقام",
+"⏱️ Time":"⏱️ الوقت"
+};
+
+let currentLanguage =
+localStorage.getItem("jooLanguage") || "en";
+
+function jooToolName(tool){
+
+    if(currentLanguage==="ar" && JOO_TOOLS_AR[tool.name])
+        return JOO_TOOLS_AR[tool.name].name;
+
+    return tool.name;
+}
+
+function jooToolDescription(tool){
+
+    if(currentLanguage==="ar" && JOO_TOOLS_AR[tool.name])
+        return JOO_TOOLS_AR[tool.name].description;
+
+    return tool.description;
+}
+
+function jooCategory(category){
+
+    if(currentLanguage==="ar" && JOO_CATEGORY_AR[category])
+        return JOO_CATEGORY_AR[category];
+
+    return category;
+}
+
+
+/* -----------------------------------------
+   LANGUAGE BUTTON
+----------------------------------------- */
+
+function createLanguageButton(){
+
+    let btn=document.getElementById("languageBtn");
+
+    if(!btn){
+
+        btn=document.createElement("button");
+
+        btn.id="languageBtn";
+
+        btn.type="button";
+
+        btn.className="language-btn";
+
+        btn.innerHTML=`
+            <span class="language-globe">🌐</span>
+            <span id="languageText"></span>
+        `;
+
+        btn.onclick=toggleLanguage;
+
+    }
+
+    moveLanguageButton();
+
+    updateLanguageButton();
+
+}
+
+
+function moveLanguageButton(){
+
+    const btn=document.getElementById("languageBtn");
+
+    if(!btn)return;
+
+    const search=document.getElementById("search");
+
+    const theme=document.getElementById("themeBtn");
+
+    const favorite=
+        document.querySelector(
+            ".favorite-btn,.favorites-btn,[data-page='favorites']"
+        );
+
+    let parent=null;
+
+    if(search)
+        parent=search.parentElement;
+
+    else if(theme)
+        parent=theme.parentElement;
+
+    else if(favorite)
+        parent=favorite.parentElement;
+
+    if(parent){
+
+        if(btn.parentElement!==parent)
+            parent.appendChild(btn);
+
+        btn.style.order="20";
+
+    }
+
+}
+
+
+function updateLanguageButton(){
+
+    const t=JOO_LANG[currentLanguage];
+
+    const text=
+        document.getElementById("languageText");
+
+    if(text)
+        text.textContent=t.language;
+
+}
+
+
+function toggleLanguage(){
+
+    currentLanguage =
+        currentLanguage==="en"
+        ? "ar"
+        : "en";
+
+    localStorage.setItem(
+        "jooLanguage",
+        currentLanguage
+    );
+
+    applyJooLanguage();
+
+}
+
+
+function applyJooLanguage(){
+
+    const t=JOO_LANG[currentLanguage];
+
+    document.documentElement.lang=t.lang;
+
+    document.documentElement.dir=t.dir;
+
+    document.body.classList.toggle(
+        "joo-arabic",
+        currentLanguage==="ar"
+    );
+
+    if(search)
+        search.placeholder=t.search;
+
+    updateLanguageButton();
+
+    updatePageLanguage();
+
+    render();
+
+}
+
+
+function updatePageLanguage(){
+
+    const title=
+        document.getElementById("pageTitle");
+
+    const subtitle=
+        document.getElementById("pageSubtitle");
+
+    if(!title || !subtitle)return;
+
+    const pageIcon=
+        document.getElementById("pageIcon");
+
+    if(
+        title.textContent==="All Tools" ||
+        title.textContent==="كل الأدوات"
+    ){
+
+        title.textContent=
+            JOO_LANG[currentLanguage].allTools;
+
+        subtitle.textContent=
+            JOO_LANG[currentLanguage].everything;
+
+        if(pageIcon)
+            pageIcon.textContent="⌂";
+
+    }
+
+}
+
+
+function jooRender(list=tools){
+
+    sections.innerHTML="";
+
+    const grouped={};
+
+    list.forEach(tool=>{
+
+        if(!grouped[tool.category])
+            grouped[tool.category]=[];
+
+        grouped[tool.category].push(tool);
+
+    });
+
+    Object.entries(grouped).forEach(
+        ([category,list])=>{
+
+            const section=
+                document.createElement("section");
+
+            section.className="category";
+
+            const t=
+                JOO_LANG[currentLanguage];
+
+            section.innerHTML=`
+
+                <div class="category-heading">
+
+                    <h2>
+                        ${jooCategory(category)}
+                    </h2>
+
+                    <span>
+                        ${list.length} ${t.tools}
+                    </span>
+
+                </div>
+
+                <div class="tools">
+
+                    ${list.map(tool=>`
+
+                    <article class="tool-card">
+
+                        <div class="tool-top">
+
+                            <div class="tool-icon">
+                                ${tool.icon}
+                            </div>
+
+                            <button
+                                class="favorite ${
+                                    favorites.includes(tool.id)
+                                    ? "active"
+                                    : ""
+                                }"
+                                onclick="
+                                    toggleFavorite(
+                                        '${tool.id}',
+                                        event
+                                    )
+                                "
+                                aria-label="Favorite">
+
+                                ★
+
+                            </button>
+
+                        </div>
+
+                        <h3>
+                            ${jooToolName(tool)}
+                        </h3>
+
+                        <p>
+                            ${jooToolDescription(tool)}
+                        </p>
+
+                        <button
+                            class="open-button"
+                            onclick="
+                                openTool('${tool.id}')
+                            ">
+
+                            ${t.open}
+
+                        </button>
+
+                    </article>
+
+                    `).join("")}
+
+                </div>
+
+            `;
+
+            sections.appendChild(section);
+
+        }
+    );
+
+    updateStats();
+
+}
+
+
+/* استبدال render بالنسخة متعددة اللغات */
+render=jooRender;
+
+
+/* -----------------------------------------
+   HOME
+----------------------------------------- */
+
+goHome=function(){
+
+    const t=JOO_LANG[currentLanguage];
+
+    document.getElementById("pageTitle")
+        .textContent=t.allTools;
+
+    document.getElementById("pageSubtitle")
+        .textContent=t.everything;
+
+    document.getElementById("pageIcon")
+        .textContent="⌂";
+
+    if(search)
+        search.value="";
+
+    render();
+
+};
+
+
+/* -----------------------------------------
+   FAVORITES
+----------------------------------------- */
+
+showFavorites=function(){
+
+    const t=JOO_LANG[currentLanguage];
+
+    const list=
+        tools.filter(
+            x=>favorites.includes(x.id)
+        );
+
+    document.getElementById("pageTitle")
+        .textContent=t.favorites;
+
+    document.getElementById("pageSubtitle")
+        .textContent=t.saved;
+
+    document.getElementById("pageIcon")
+        .textContent="★";
+
+    if(!list.length){
+
+        sections.innerHTML=`
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    ★
+                </div>
+
+                <h3>
+                    ${t.noFavorites}
+                </h3>
+
+                <p>
+                    ${t.noFavoritesText}
+                </p>
+
+            </div>
+
+        `;
+
+        updateStats();
+
+        return;
+
+    }
+
+    render(list);
+
+};
+
+
+/* -----------------------------------------
+   RECENT
+----------------------------------------- */
+
+showRecent=function(){
+
+    const t=JOO_LANG[currentLanguage];
+
+    const list=
+        recent
+        .map(id=>tools.find(x=>x.id===id))
+        .filter(Boolean);
+
+    document.getElementById("pageTitle")
+        .textContent=t.recent;
+
+    document.getElementById("pageSubtitle")
+        .textContent=t.recently;
+
+    document.getElementById("pageIcon")
+        .textContent="◷";
+
+    if(!list.length){
+
+        sections.innerHTML=`
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    ◷
+                </div>
+
+                <h3>
+                    ${t.noRecent}
+                </h3>
+
+                <p>
+                    ${t.noRecentText}
+                </p>
+
+            </div>
+
+        `;
+
+        updateStats();
+
+        return;
+
+    }
+
+    render(list);
+
+};
+
+
+/* -----------------------------------------
+   SEARCH
+----------------------------------------- */
+
+if(search){
+
+    search.addEventListener(
+        "input",
+        ()=>{
+
+            const q=
+                search.value
+                .trim()
+                .toLowerCase();
+
+            if(!q){
+
+                render();
+
+                return;
+
+            }
+
+            const result=
+                tools.filter(tool=>
+
+                    tool.name
+                    .toLowerCase()
+                    .includes(q)
+
+                    ||
+
+                    tool.description
+                    .toLowerCase()
+                    .includes(q)
+
+                    ||
+
+                    jooToolName(tool)
+                    .toLowerCase()
+                    .includes(q)
+
+                    ||
+
+                    jooToolDescription(tool)
+                    .toLowerCase()
+                    .includes(q)
+
+                );
+
+            render(result);
+
+        }
+    );
+
+}
+
+
+/* -----------------------------------------
+   INITIALIZE
+----------------------------------------- */
+
+function initializeJooLanguage(){
+
+    createLanguageButton();
+
+    applyJooLanguage();
+
+}
+
+if(
+    document.readyState==="loading"
+){
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeJooLanguage
+    );
+
+}else{
+
+    initializeJooLanguage();
+
+}
+
+
+/* =========================================
+   JOO TOOLS - LANGUAGE BUTTON FIX
+========================================= */
+
+(function(){
+
+    function setupLanguageButton(){
+
+        const btn = document.getElementById("languageBtn");
+
+        if(!btn){
+            console.log("Joo Tools: language button not found");
+            return;
+        }
+
+        /* منع تكرار الحدث */
+        btn.onclick = null;
+
+        btn.addEventListener("click", function(e){
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const oldLang =
+                localStorage.getItem("jooLanguage") || "en";
+
+            const newLang =
+                oldLang === "en" ? "ar" : "en";
+
+            localStorage.setItem(
+                "jooLanguage",
+                newLang
+            );
+
+            /* تغيير اتجاه الصفحة */
+            document.documentElement.lang =
+                newLang;
+
+            document.documentElement.dir =
+                newLang === "ar"
+                ? "rtl"
+                : "ltr";
+
+            document.body.classList.toggle(
+                "joo-arabic",
+                newLang === "ar"
+            );
+
+            /* تغيير اسم الزر */
+            const text =
+                document.getElementById("languageText");
+
+            if(text){
+
+                text.textContent =
+                    newLang === "ar"
+                    ? "English"
+                    : "العربية";
+
+            }
+
+            /* تحديث النصوص */
+            if(typeof applyJooLanguage === "function"){
+
+                currentLanguage = newLang;
+
+                applyJooLanguage();
+
+            }
+
+            /* تحديث الصفحة */
+            if(typeof updatePageLanguage === "function")
+                updatePageLanguage();
+
+            if(typeof render === "function")
+                render();
+
+            console.log(
+                "Joo Tools language:",
+                newLang
+            );
+
+        });
+
+        /* الحالة الحالية */
+        const lang =
+            localStorage.getItem("jooLanguage") || "en";
+
+        const text =
+            document.getElementById("languageText");
+
+        if(text){
+
+            text.textContent =
+                lang === "ar"
+                ? "English"
+                : "العربية";
+
+        }
+
+        document.documentElement.lang = lang;
+
+        document.documentElement.dir =
+            lang === "ar"
+            ? "rtl"
+            : "ltr";
+
+    }
+
+
+    if(document.readyState === "loading"){
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            setupLanguageButton
+        );
+
+    }else{
+
+        setupLanguageButton();
+
+    }
+
+})();
+
+/* =========================================
+   JOO TOOLS - TOAST SYSTEM
+========================================= */
+
+(function(){
+
+    function createToastContainer(){
+
+        if(document.getElementById("jooToastContainer"))
+            return;
+
+        const container =
+            document.createElement("div");
+
+        container.id =
+            "jooToastContainer";
+
+        document.body.appendChild(container);
+
+    }
+
+
+    window.jooToast=function(
+        message,
+        icon="✓",
+        duration=2500
+    ){
+
+        createToastContainer();
+
+        const container =
+            document.getElementById(
+                "jooToastContainer"
+            );
+
+        const toast =
+            document.createElement("div");
+
+        toast.className="joo-toast";
+
+        toast.innerHTML=`
+
+            <div class="joo-toast-icon">
+                ${icon}
+            </div>
+
+            <div class="joo-toast-text">
+                ${message}
+            </div>
+
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(()=>{
+
+            toast.classList.add("hide");
+
+            setTimeout(()=>{
+
+                toast.remove();
+
+            },300);
+
+        },duration);
+
+    };
+
+
+    if(document.readyState==="loading"){
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            createToastContainer
+        );
+
+    }else{
+
+        createToastContainer();
+
+    }
+
+})();
+
+/* =========================================
+   JOO TOOLS — WORKSPACE ENGINE
+========================================= */
+
+window.jooOpenWorkspace=function(tool){
+
+    const t=JOO_LANG[currentLanguage];
+
+    const name=jooToolName(tool);
+
+    const description=jooToolDescription(tool);
+
+    sections.innerHTML=`
+
+        <div class="tool-workspace">
+
+            <div class="tool-workspace-header">
+
+                <div class="tool-workspace-icon">
+                    ${tool.icon}
+                </div>
+
+                <div class="tool-workspace-title">
+
+                    <h1>${name}</h1>
+
+                    <p>${description}</p>
+
+                </div>
+
+                <button
+                    class="tool-back"
+                    onclick="goHome()">
+
+                    ${currentLanguage==="ar"
+                        ? "← العودة"
+                        : "← Back"}
+
+                </button>
+
+            </div>
+
+            <div
+                id="jooToolContent"
+                class="tool-panel">
+
+                <div class="tool-field">
+
+                    <label>
+                        ${t.input}
+                    </label>
+
+                    <textarea
+                        id="jooToolInput"
+                        placeholder="${t.input}">
+                    </textarea>
+
+                </div>
+
+                <div class="tool-actions">
+
+                    <button
+                        class="tool-btn primary"
+                        onclick="jooProcessTool('${tool.id}')">
+
+                        ${t.generate}
+
+                    </button>
+
+                    <button
+                        class="tool-btn"
+                        onclick="
+                            document.getElementById(
+                                'jooToolInput'
+                            ).value=''
+                        ">
+
+                        ${t.clear}
+
+                    </button>
+
+                </div>
+
+                <div class="tool-result">
+
+                    <div class="tool-result-header">
+
+                        <span class="tool-result-title">
+                            ${t.result}
+                        </span>
+
+                        <button
+                            class="tool-copy"
+                            onclick="jooCopyResult()">
+
+                            ${t.copy}
+
+                        </button>
+
+                    </div>
+
+                    <div id="jooToolResult">
+                        ${t.result}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+};
+
+
+window.jooCopyResult=function(){
+
+    const result=
+        document.getElementById(
+            "jooToolResult"
+        );
+
+    if(!result)return;
+
+    const text=result.innerText.trim();
+
+    if(!text)return;
+
+    navigator.clipboard.writeText(text)
+        .then(()=>{
+
+            if(window.jooToast){
+
+                jooToast(
+                    currentLanguage==="ar"
+                    ? "تم نسخ النتيجة ✓"
+                    : "Result copied ✓",
+                    "📋"
+                );
+
+            }
+
+        });
+
+};
+
+
+window.jooProcessTool=function(id){
+
+    const input=
+        document.getElementById(
+            "jooToolInput"
+        );
+
+    const output=
+        document.getElementById(
+            "jooToolResult"
+        );
+
+    if(!input || !output)return;
+
+    const value=input.value;
+
+    if(!value.trim()){
+
+        output.textContent=
+            currentLanguage==="ar"
+            ? "اكتب شيئًا أولًا."
+            : "Enter something first.";
+
+        return;
+
+    }
+
+    /*
+       أدوات النصوص الأساسية تعمل محليًا
+       بدون API.
+    */
+
+    const tool=
+        tools.find(x=>x.id===id);
+
+    if(!tool)return;
+
+    let result=value;
+
+    const name=
+        tool.name.toLowerCase();
+
+    if(
+        name.includes("uppercase")
+    ){
+
+        result=value.toUpperCase();
+
+    }else if(
+        name.includes("lowercase")
+    ){
+
+        result=value.toLowerCase();
+
+    }else if(
+        name.includes("trim") ||
+        name.includes("clean")
+    ){
+
+        result=value
+            .split("\n")
+            .map(x=>x.trim())
+            .filter(Boolean)
+            .join("\n");
+
+    }else if(
+        name.includes("duplicate")
+    ){
+
+        result=[
+            ...new Set(
+                value.split("\n")
+            )
+        ].join("\n");
+
+    }else if(
+        name.includes("sort")
+    ){
+
+        result=value
+            .split("\n")
+            .sort((a,b)=>
+                a.localeCompare(b)
+            )
+            .join("\n");
+
+    }
+
+    output.textContent=result;
+
+    if(window.jooToast){
+
+        jooToast(
+            currentLanguage==="ar"
+            ? "تم تنفيذ الأداة ✓"
+            : "Tool completed ✓",
+            "⚡"
+        );
+
+    }
+
+};
+
+
+/*
+   ربط البطاقات بمساحة الأدوات
+*/
+
+if(typeof openTool==="function"){
+
+    const originalOpenTool=openTool;
+
+    openTool=function(id){
+
+        const tool=
+            tools.find(x=>x.id===id);
+
+        if(!tool){
+
+            originalOpenTool(id);
+
+            return;
+
+        }
+
+        recent=
+            recent.filter(x=>x!==id);
+
+        recent.unshift(id);
+
+        recent=recent.slice(0,10);
+
+        localStorage.setItem(
+            "jooRecent",
+            JSON.stringify(recent)
+        );
+
+        jooOpenWorkspace(tool);
+
+    };
+
+}
+
+
+/* =========================================================
+   JOO TOOLS — REAL TOOLS ENGINE V1
+   100% LOCAL — NO API
+========================================================= */
+
+(function(){
+
+const A = currentLanguage === "ar";
+
+const TXT = {
+    en:{
+        back:"← Back",
+        calculate:"Calculate",
+        clear:"Clear",
+        copy:"Copy",
+        result:"Result",
+        number:"Number",
+        first:"First number",
+        second:"Second number",
+        minimum:"Minimum",
+        maximum:"Maximum",
+        values:"Values",
+        generate:"Generate",
+        text:"Text",
+        format:"Format JSON",
+        encode:"Encode",
+        decode:"Decode",
+        input:"Input",
+        output:"Output",
+        length:"Length",
+        uppercase:"Uppercase",
+        lowercase:"Lowercase",
+        lines:"Lines",
+        from:"From",
+        to:"To",
+        choose:"Choose",
+        start:"Start",
+        stop:"Stop",
+        reset:"Reset",
+        seconds:"Seconds",
+        minutes:"Minutes",
+        hours:"Hours",
+        birth:"Date of birth",
+        base:"Base",
+        convert:"Convert",
+        quantity:"Quantity",
+        unit:"Unit",
+        gradient:"Gradient",
+        palette:"Palette",
+        passwordLength:"Password length",
+        includeUpper:"Uppercase",
+        includeNumbers:"Numbers",
+        includeSymbols:"Symbols",
+        validJson:"Valid JSON ✓",
+        invalidJson:"Invalid JSON ✕",
+        copied:"Copied ✓",
+        done:"Done ✓"
+    },
+    ar:{
+        back:"← رجوع",
+        calculate:"احسب",
+        clear:"مسح",
+        copy:"نسخ",
+        result:"النتيجة",
+        number:"الرقم",
+        first:"الرقم الأول",
+        second:"الرقم الثاني",
+        minimum:"الأصغر",
+        maximum:"الأكبر",
+        values:"القيم",
+        generate:"توليد",
+        text:"النص",
+        format:"تنسيق JSON",
+        encode:"ترميز",
+        decode:"فك الترميز",
+        input:"الإدخال",
+        output:"الإخراج",
+        length:"الطول",
+        uppercase:"أحرف كبيرة",
+        lowercase:"أحرف صغيرة",
+        lines:"الأسطر",
+        from:"من",
+        to:"إلى",
+        choose:"اختيار",
+        start:"بدء",
+        stop:"إيقاف",
+        reset:"إعادة ضبط",
+        seconds:"ثواني",
+        minutes:"دقائق",
+        hours:"ساعات",
+        base:"النظام",
+        convert:"تحويل",
+        quantity:"القيمة",
+        unit:"الوحدة",
+        gradient:"التدرج",
+        palette:"الألوان",
+        passwordLength:"طول كلمة المرور",
+        includeUpper:"أحرف كبيرة",
+        includeNumbers:"أرقام",
+        includeSymbols:"رموز",
+        validJson:"JSON صحيح ✓",
+        invalidJson:"JSON غير صحيح ✕",
+        copied:"تم النسخ ✓",
+        done:"تم التنفيذ ✓"
+    }
+};
+
+const T = TXT[currentLanguage];
+
+function esc(v){
+    return String(v ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+}
+
+function field(label, html){
+    return `
+        <div class="tool-field">
+            <label>${label}</label>
+            ${html}
+        </div>
+    `;
+}
+
+function input(id, type="text", value="", placeholder=""){
+    return `
+        <input
+            id="${id}"
+            type="${type}"
+            value="${esc(value)}"
+            placeholder="${esc(placeholder)}">
+    `;
+}
+
+function textarea(id, placeholder=""){
+    return `
+        <textarea
+            id="${id}"
+            placeholder="${esc(placeholder)}"></textarea>
+    `;
+}
+
+function buttons(action){
+    return `
+        <div class="tool-actions">
+            <button class="tool-btn primary" onclick="${action}">
+                ${T.calculate}
+            </button>
+            <button class="tool-btn" onclick="jooClearTool()">
+                ${T.clear}
+            </button>
+        </div>
+    `;
+}
+
+function resultBox(){
+    return `
+        <div class="tool-result">
+            <div class="tool-result-header">
+                <span class="tool-result-title">${T.result}</span>
+                <button class="tool-copy" onclick="jooCopyResult()">
+                    ${T.copy}
+                </button>
+            </div>
+            <div id="jooToolResult"></div>
+        </div>
+    `;
+}
+
+function workspace(tool, content){
+
+    sections.innerHTML = `
+        <div class="tool-workspace">
+
+            <div class="tool-workspace-header">
+
+                <div class="tool-workspace-icon">
+                    ${tool.icon}
+                </div>
+
+                <div class="tool-workspace-title">
+
+                    <h1>${jooToolName(tool)}</h1>
+
+                    <p>${jooToolDescription(tool)}</p>
+
+                </div>
+
+                <button
+                    class="tool-back"
+                    onclick="goHome()">
+                    ${T.back}
+                </button>
+
+            </div>
+
+            <div class="tool-panel">
+                ${content}
+            </div>
+
+        </div>
+    `;
+
+    updateStats();
+
+}
+
+
+/* =========================================================
+   OPEN TOOL
+========================================================= */
+
+window.jooRealOpenTool = function(id){
+
+    const tool = tools.find(x => x.id === id);
+
+    if(!tool) return;
+
+    recent = recent.filter(x => x !== id);
+    recent.unshift(id);
+    recent = recent.slice(0,10);
+
+    localStorage.setItem(
+        "jooRecent",
+        JSON.stringify(recent)
+    );
+
+    switch(id){
+
+        case "calculator":
+            calculatorTool(tool);
+            break;
+
+        case "percentage":
+            percentageTool(tool);
+            break;
+
+        case "average":
+            averageTool(tool);
+            break;
+
+        case "random-number":
+            randomNumberTool(tool);
+            break;
+
+        case "random-choice":
+            randomChoiceTool(tool);
+            break;
+
+        case "uuid":
+            uuidTool(tool);
+            break;
+
+        case "gradient":
+            gradientTool(tool);
+            break;
+
+        case "palette":
+            paletteTool(tool);
+            break;
+
+        case "text-cleaner":
+            textCleanerTool(tool);
+            break;
+
+        case "text-sorter":
+            textSorterTool(tool);
+            break;
+
+        case "duplicate":
+            duplicateTool(tool);
+            break;
+
+        case "json":
+            jsonTool(tool);
+            break;
+
+        case "url":
+            urlTool(tool);
+            break;
+
+        case "base64":
+            base64Tool(tool);
+            break;
+
+        case "base":
+            baseTool(tool);
+            break;
+
+        case "hash":
+            hashTool(tool);
+            break;
+
+        case "password":
+            passwordTool(tool);
+            break;
+
+        case "units":
+            unitsTool(tool);
+            break;
+
+        case "roman":
+            romanTool(tool);
+            break;
+
+        case "number-words":
+            numberWordsTool(tool);
+            break;
+
+        case "age":
+            ageTool(tool);
+            break;
+
+        case "stopwatch":
+            stopwatchTool(tool);
+            break;
+
+        case "countdown":
+            countdownTool(tool);
+            break;
+
+        default:
+            jooOpenWorkspace(tool);
+
+    }
+
+};
+
+
+/* =========================================================
+   CALCULATOR
+========================================================= */
+
+function calculatorTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.first,input("calcA","number","","0"))}
+
+        ${field(T.second,input("calcB","number","","0"))}
+
+        ${field(
+            currentLanguage==="ar" ? "العملية" : "Operation",
+            `<select id="calcOp">
+                <option value="+">+</option>
+                <option value="-">−</option>
+                <option value="*">×</option>
+                <option value="/">÷</option>
+                <option value="%">%</option>
+            </select>`
+        )}
+
+        ${buttons("calculateCalculator()")}
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.calculateCalculator=function(){
+
+    const a=parseFloat(document.getElementById("calcA").value);
+    const b=parseFloat(document.getElementById("calcB").value);
+    const op=document.getElementById("calcOp").value;
+
+    let r;
+
+    if(isNaN(a)||isNaN(b)){
+        r=currentLanguage==="ar" ? "أدخل رقمين صحيحين." : "Enter two valid numbers.";
+    }else{
+
+        if(op==="+") r=a+b;
+        if(op==="-") r=a-b;
+        if(op==="*") r=a*b;
+        if(op==="/") r=b===0 ? "Cannot divide by zero" : a/b;
+        if(op==="%") r=a%b;
+
+    }
+
+    document.getElementById("jooToolResult").textContent=r;
+};
+
+
+/* =========================================================
+   PERCENTAGE
+========================================================= */
+
+function percentageTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.number,input("percentValue","number","","100"))}
+
+        ${field(
+            currentLanguage==="ar" ? "النسبة %" : "Percentage %",
+            input("percentRate","number","","10")
+        )}
+
+        ${buttons("calculatePercentage()")}
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.calculatePercentage=function(){
+
+    const n=parseFloat(document.getElementById("percentValue").value);
+    const p=parseFloat(document.getElementById("percentRate").value);
+
+    const r=n*p/100;
+
+    document.getElementById("jooToolResult").textContent=
+        isFinite(r) ? r : "Invalid input";
+
+};
+
+
+/* =========================================================
+   AVERAGE
+========================================================= */
+
+function averageTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.values,
+            textarea("averageInput")
+        )}
+
+        <p style="opacity:.6;font-size:12px">
+            ${currentLanguage==="ar"
+            ? "اكتب الأرقام مفصولة بمسافات أو أسطر."
+            : "Enter numbers separated by spaces or lines."}
+        </p>
+
+        ${buttons("calculateAverage()")}
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.calculateAverage=function(){
+
+    const values=
+        document.getElementById("averageInput")
+        .value
+        .split(/[\s,]+/)
+        .map(Number)
+        .filter(Number.isFinite);
+
+    if(!values.length)return;
+
+    const sum=values.reduce((a,b)=>a+b,0);
+    const avg=sum/values.length;
+
+    document.getElementById("jooToolResult").textContent=
+        `${T.result}: ${avg}
+${T.minimum}: ${Math.min(...values)}
+${T.maximum}: ${Math.max(...values)}
+${currentLanguage==="ar"?"المجموع":"Sum"}: ${sum}
+${currentLanguage==="ar"?"العدد":"Count"}: ${values.length}`;
+
+};
+
+
+/* =========================================================
+   RANDOM NUMBER
+========================================================= */
+
+function randomNumberTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.minimum,input("randomMin","number","","1"))}
+
+        ${field(T.maximum,input("randomMax","number","","100"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generateRandomNumber()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.generateRandomNumber=function(){
+
+    let min=parseInt(document.getElementById("randomMin").value);
+    let max=parseInt(document.getElementById("randomMax").value);
+
+    if(min>max)[min,max]=[max,min];
+
+    const r=
+        Math.floor(
+            Math.random()*(max-min+1)
+        )+min;
+
+    document.getElementById("jooToolResult")
+        .textContent=r;
+
+};
+
+
+/* =========================================================
+   RANDOM CHOICE
+========================================================= */
+
+function randomChoiceTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.values,
+            textarea("choiceInput")
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generateRandomChoice()">
+                ${T.choose}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.generateRandomChoice=function(){
+
+    const list=
+        document.getElementById("choiceInput")
+        .value
+        .split(/\n|,/)
+        .map(x=>x.trim())
+        .filter(Boolean);
+
+    if(!list.length)return;
+
+    document.getElementById("jooToolResult")
+        .textContent=
+        list[Math.floor(Math.random()*list.length)];
+
+};
+
+
+/* =========================================================
+   UUID
+========================================================= */
+
+function uuidTool(tool){
+
+    workspace(tool,`
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generateUUID()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.generateUUID=function(){
+
+    const uuid=
+        crypto.randomUUID
+        ? crypto.randomUUID()
+        : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+            .replace(/[xy]/g,c=>{
+
+                const r=Math.random()*16|0;
+                const v=c==="x"?r:(r&3|8);
+
+                return v.toString(16);
+
+            });
+
+    document.getElementById("jooToolResult")
+        .textContent=uuid;
+
+};
+
+
+/* =========================================================
+   GRADIENT
+========================================================= */
+
+function gradientTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            currentLanguage==="ar"?"اللون الأول":"Color 1",
+            `<input id="grad1" type="color" value="#7c5cff">`
+        )}
+
+        ${field(
+            currentLanguage==="ar"?"اللون الثاني":"Color 2",
+            `<input id="grad2" type="color" value="#00d4ff">`
+        )}
+
+        ${field(
+            currentLanguage==="ar"?"الزاوية":"Angle",
+            input("gradAngle","number","135")
+        )}
+
+        <div id="gradientPreview"
+             style="
+                height:160px;
+                border-radius:16px;
+                margin-top:15px;
+                border:1px solid rgba(255,255,255,.1);
+             ">
+        </div>
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generateGradient()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+    generateGradient();
+
+}
+
+window.generateGradient=function(){
+
+    const a=document.getElementById("grad1").value;
+    const b=document.getElementById("grad2").value;
+    const angle=document.getElementById("gradAngle").value;
+
+    const css=
+        `linear-gradient(${angle}deg, ${a}, ${b})`;
+
+    document.getElementById("gradientPreview")
+        .style.background=css;
+
+    document.getElementById("jooToolResult")
+        .textContent=css;
+
+};
+
+
+/* =========================================================
+   PALETTE
+========================================================= */
+
+function paletteTool(tool){
+
+    workspace(tool,`
+
+        <div
+            id="palettePreview"
+            style="
+                display:grid;
+                grid-template-columns:repeat(5,1fr);
+                min-height:130px;
+                border-radius:15px;
+                overflow:hidden;
+            ">
+        </div>
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generatePalette()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+    generatePalette();
+
+}
+
+window.generatePalette=function(){
+
+    const colors=[];
+
+    for(let i=0;i<5;i++){
+
+        colors.push(
+            "#"+
+            Math.floor(
+                Math.random()*16777215
+            )
+            .toString(16)
+            .padStart(6,"0")
+        );
+
+    }
+
+    document.getElementById("palettePreview")
+        .innerHTML=
+        colors.map(c=>
+            `<div style="
+                background:${c};
+                display:flex;
+                align-items:end;
+                justify-content:center;
+                padding:8px;
+                color:white;
+                font-size:11px;
+            ">${c}</div>`
+        ).join("");
+
+    document.getElementById("jooToolResult")
+        .textContent=colors.join("\n");
+
+};
+
+
+/* =========================================================
+   TEXT CLEANER
+========================================================= */
+
+function textCleanerTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("textInput"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="cleanText()">
+                ${T.calculate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.cleanText=function(){
+
+    const v=document.getElementById("textInput").value;
+
+    const r=v
+        .split("\n")
+        .map(x=>x.trim().replace(/\s+/g," "))
+        .filter(Boolean)
+        .join("\n");
+
+    document.getElementById("jooToolResult")
+        .textContent=r;
+
+};
+
+
+/* =========================================================
+   TEXT SORTER
+========================================================= */
+
+function textSorterTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("sortInput"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="sortText()">
+                ${T.calculate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.sortText=function(){
+
+    const r=
+        document.getElementById("sortInput")
+        .value
+        .split("\n")
+        .sort((a,b)=>a.localeCompare(b))
+        .join("\n");
+
+    document.getElementById("jooToolResult")
+        .textContent=r;
+
+};
+
+
+/* =========================================================
+   DUPLICATE REMOVER
+========================================================= */
+
+function duplicateTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("duplicateInput"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="removeDuplicates()">
+                ${T.calculate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.removeDuplicates=function(){
+
+    const r=[
+        ...new Set(
+            document.getElementById("duplicateInput")
+            .value
+            .split("\n")
+            .map(x=>x.trim())
+            .filter(Boolean)
+        )
+    ].join("\n");
+
+    document.getElementById("jooToolResult")
+        .textContent=r;
+
+};
+
+
+/* =========================================================
+   JSON FORMATTER
+========================================================= */
+
+function jsonTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            "JSON",
+            textarea("jsonInput")
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="formatJSON()">
+                ${T.format}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.formatJSON=function(){
+
+    try{
+
+        const data=
+            JSON.parse(
+                document.getElementById("jsonInput").value
+            );
+
+        document.getElementById("jooToolResult")
+            .textContent=
+            JSON.stringify(data,null,4);
+
+        jooToast(T.validJson,"✓");
+
+    }catch(e){
+
+        document.getElementById("jooToolResult")
+            .textContent=e.message;
+
+        jooToast(T.invalidJson,"✕");
+
+    }
+
+};
+
+
+/* =========================================================
+   URL
+========================================================= */
+
+function urlTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("urlInput"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="encodeURL()">
+                ${T.encode}
+            </button>
+
+            <button
+                class="tool-btn"
+                onclick="decodeURL()">
+                ${T.decode}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.encodeURL=function(){
+
+    document.getElementById("jooToolResult")
+        .textContent=
+        encodeURIComponent(
+            document.getElementById("urlInput").value
+        );
+
+};
+
+window.decodeURL=function(){
+
+    try{
+
+        document.getElementById("jooToolResult")
+            .textContent=
+            decodeURIComponent(
+                document.getElementById("urlInput").value
+            );
+
+    }catch(e){
+
+        document.getElementById("jooToolResult")
+            .textContent=e.message;
+
+    }
+
+};
+
+
+/* =========================================================
+   BASE64
+========================================================= */
+
+function base64Tool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("base64Input"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="encodeBase64()">
+                ${T.encode}
+            </button>
+
+            <button
+                class="tool-btn"
+                onclick="decodeBase64()">
+                ${T.decode}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.encodeBase64=function(){
+
+    const v=
+        document.getElementById("base64Input").value;
+
+    document.getElementById("jooToolResult")
+        .textContent=
+        btoa(
+            unescape(
+                encodeURIComponent(v)
+            )
+        );
+
+};
+
+window.decodeBase64=function(){
+
+    try{
+
+        const v=
+            document.getElementById("base64Input").value;
+
+        document.getElementById("jooToolResult")
+            .textContent=
+            decodeURIComponent(
+                escape(atob(v))
+            );
+
+    }catch(e){
+
+        document.getElementById("jooToolResult")
+            .textContent="Invalid Base64";
+
+    }
+
+};
+
+
+/* =========================================================
+   BASE CONVERTER
+========================================================= */
+
+function baseTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.number,
+            input("baseNumber","text","","FF")
+        )}
+
+        ${field(
+            T.from,
+            `<select id="fromBase">
+                ${Array.from({length:35},(_,i)=>
+                    `<option value="${i+2}" ${i===14?"selected":""}>${i+2}</option>`
+                ).join("")}
+            </select>`
+        )}
+
+        ${field(
+            T.to,
+            `<select id="toBase">
+                ${Array.from({length:35},(_,i)=>
+                    `<option value="${i+2}" ${i===8?"selected":""}>${i+2}</option>`
+                ).join("")}
+            </select>`
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="convertBase()">
+                ${T.convert}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.convertBase=function(){
+
+    const value=
+        document.getElementById("baseNumber").value.trim();
+
+    const from=
+        parseInt(document.getElementById("fromBase").value);
+
+    const to=
+        parseInt(document.getElementById("toBase").value);
+
+    try{
+
+        const decimal=parseInt(value,from);
+
+        if(isNaN(decimal))
+            throw Error("Invalid number");
+
+        document.getElementById("jooToolResult")
+            .textContent=
+            decimal.toString(to).toUpperCase();
+
+    }catch(e){
+
+        document.getElementById("jooToolResult")
+            .textContent=e.message;
+
+    }
+
+};
+
+
+/* =========================================================
+   SHA-256
+========================================================= */
+
+function hashTool(tool){
+
+    workspace(tool,`
+
+        ${field(T.text,textarea("hashInput"))}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generateHash()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.generateHash=async function(){
+
+    const text=
+        document.getElementById("hashInput").value;
+
+    const data=
+        new TextEncoder().encode(text);
+
+    const hash=
+        await crypto.subtle.digest(
+            "SHA-256",
+            data
+        );
+
+    const result=
+        [...new Uint8Array(hash)]
+        .map(b=>b.toString(16).padStart(2,"0"))
+        .join("");
+
+    document.getElementById("jooToolResult")
+        .textContent=result;
+
+};
+
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+function passwordTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.passwordLength,
+            input("passwordLength","number","16")
+        )}
+
+        <div style="display:grid;gap:10px">
+
+            <label>
+                <input id="passUpper" type="checkbox" checked>
+                ${T.includeUpper}
+            </label>
+
+            <label>
+                <input id="passNumbers" type="checkbox" checked>
+                ${T.includeNumbers}
+            </label>
+
+            <label>
+                <input id="passSymbols" type="checkbox" checked>
+                ${T.includeSymbols}
+            </label>
+
+        </div>
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="generatePassword()">
+                ${T.generate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.generatePassword=function(){
+
+    const len=
+        Math.max(
+            4,
+            Math.min(
+                128,
+                parseInt(
+                    document.getElementById("passwordLength").value
+                )||16
+            )
+        );
+
+    let chars=
+        "abcdefghijklmnopqrstuvwxyz";
+
+    if(document.getElementById("passUpper").checked)
+        chars+="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    if(document.getElementById("passNumbers").checked)
+        chars+="0123456789";
+
+    if(document.getElementById("passSymbols").checked)
+        chars+="!@#$%^&*()-_=+[]{}";
+
+    const arr=
+        new Uint32Array(len);
+
+    crypto.getRandomValues(arr);
+
+    let password="";
+
+    for(let i=0;i<len;i++)
+        password+=chars[arr[i]%chars.length];
+
+    document.getElementById("jooToolResult")
+        .textContent=password;
+
+};
+
+
+/* =========================================================
+   UNITS
+========================================================= */
+
+function unitsTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.quantity,
+            input("unitValue","number","1")
+        )}
+
+        ${field(
+            T.from,
+            `<select id="unitFrom">
+                <option value="m">Meter</option>
+                <option value="km">Kilometer</option>
+                <option value="cm">Centimeter</option>
+                <option value="mi">Mile</option>
+                <option value="ft">Foot</option>
+                <option value="in">Inch</option>
+            </select>`
+        )}
+
+        ${field(
+            T.to,
+            `<select id="unitTo">
+                <option value="m">Meter</option>
+                <option value="km">Kilometer</option>
+                <option value="cm">Centimeter</option>
+                <option value="mi">Mile</option>
+                <option value="ft">Foot</option>
+                <option value="in">Inch</option>
+            </select>`
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="convertUnits()">
+                ${T.convert}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.convertUnits=function(){
+
+    const factors={
+        m:1,
+        km:1000,
+        cm:.01,
+        mi:1609.344,
+        ft:.3048,
+        in:.0254
+    };
+
+    const v=
+        parseFloat(
+            document.getElementById("unitValue").value
+        );
+
+    const from=
+        document.getElementById("unitFrom").value;
+
+    const to=
+        document.getElementById("unitTo").value;
+
+    const result=
+        v*factors[from]/factors[to];
+
+    document.getElementById("jooToolResult")
+        .textContent=result;
+
+};
+
+
+/* =========================================================
+   ROMAN NUMERALS
+========================================================= */
+
+function romanTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.number,
+            input("romanInput","number","","2026")
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="convertRoman()">
+                ${T.convert}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.convertRoman=function(){
+
+    let n=
+        parseInt(
+            document.getElementById("romanInput").value
+        );
+
+    if(n<1||n>3999){
+
+        document.getElementById("jooToolResult")
+            .textContent=
+            currentLanguage==="ar"
+            ?"أدخل رقمًا من 1 إلى 3999."
+            :"Enter a number from 1 to 3999.";
+
+        return;
+
+    }
+
+    const vals=[
+        [1000,"M"],[900,"CM"],[500,"D"],
+        [400,"CD"],[100,"C"],[90,"XC"],
+        [50,"L"],[40,"XL"],[10,"X"],
+        [9,"IX"],[5,"V"],[4,"IV"],[1,"I"]
+    ];
+
+    let r="";
+
+    for(const [v,s] of vals){
+
+        while(n>=v){
+
+            r+=s;
+            n-=v;
+
+        }
+
+    }
+
+    document.getElementById("jooToolResult")
+        .textContent=r;
+
+};
+
+
+/* =========================================================
+   NUMBER TO WORDS
+========================================================= */
+
+function numberWordsTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.number,
+            input("wordsNumber","number","","2026")
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="numberToWords()">
+                ${T.convert}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.numberToWords=function(){
+
+    let n=
+        parseInt(
+            document.getElementById("wordsNumber").value
+        );
+
+    if(isNaN(n))return;
+
+    const ones=[
+        "zero","one","two","three","four",
+        "five","six","seven","eight","nine",
+        "ten","eleven","twelve","thirteen",
+        "fourteen","fifteen","sixteen",
+        "seventeen","eighteen","nineteen"
+    ];
+
+    const tens=[
+        "","","twenty","thirty","forty",
+        "fifty","sixty","seventy","eighty","ninety"
+    ];
+
+    function convert(x){
+
+        if(x<20)return ones[x];
+
+        if(x<100)
+            return tens[Math.floor(x/10)]
+                +(x%10?" "+ones[x%10]:"");
+
+        if(x<1000)
+            return ones[Math.floor(x/100)]
+                +" hundred"
+                +(x%100?" "+convert(x%100):"");
+
+        if(x<1000000)
+            return convert(Math.floor(x/1000))
+                +" thousand"
+                +(x%1000?" "+convert(x%1000):"");
+
+        return String(x);
+
+    }
+
+    document.getElementById("jooToolResult")
+        .textContent=
+        n>=0 ? convert(n) : "Negative numbers are not supported.";
+
+};
+
+
+/* =========================================================
+   AGE CALCULATOR
+========================================================= */
+
+function ageTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.birth,
+            `<input id="birthDate" type="date">`
+        )}
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="calculateAge()">
+                ${T.calculate}
+            </button>
+
+        </div>
+
+        ${resultBox()}
+
+    `);
+
+}
+
+window.calculateAge=function(){
+
+    const value=
+        document.getElementById("birthDate").value;
+
+    if(!value)return;
+
+    const birth=new Date(value);
+    const today=new Date();
+
+    let age=
+        today.getFullYear()-birth.getFullYear();
+
+    const m=
+        today.getMonth()-birth.getMonth();
+
+    if(
+        m<0 ||
+        (m===0 && today.getDate()<birth.getDate())
+    ){
+        age--;
+    }
+
+    document.getElementById("jooToolResult")
+        .textContent=
+        currentLanguage==="ar"
+        ? `العمر: ${age} سنة`
+        : `Age: ${age} years`;
+
+};
+
+
+/* =========================================================
+   STOPWATCH
+========================================================= */
+
+let jooStopwatchTimer=null;
+let jooStopwatchStart=0;
+let jooStopwatchElapsed=0;
+
+function stopwatchTool(tool){
+
+    workspace(tool,`
+
+        <div
+            id="stopwatchDisplay"
+            style="
+                font-size:42px;
+                font-weight:800;
+                text-align:center;
+                padding:25px;
+            ">
+            00:00:00.000
+        </div>
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="startStopwatch()">
+                ${T.start}
+            </button>
+
+            <button
+                class="tool-btn"
+                onclick="stopStopwatch()">
+                ${T.stop}
+            </button>
+
+            <button
+                class="tool-btn"
+                onclick="resetStopwatch()">
+                ${T.reset}
+            </button>
+
+        </div>
+
+    `);
+
+}
+
+function updateStopwatch(){
+
+    const elapsed=
+        Date.now()-jooStopwatchStart+jooStopwatchElapsed;
+
+    const ms=elapsed%1000;
+
+    const total=Math.floor(elapsed/1000);
+
+    const s=total%60;
+
+    const m=Math.floor(total/60)%60;
+
+    const h=Math.floor(total/3600);
+
+    const display=
+        String(h).padStart(2,"0")+":"+
+        String(m).padStart(2,"0")+":"+
+        String(s).padStart(2,"0")+"."+
+        String(ms).padStart(3,"0");
+
+    const el=
+        document.getElementById("stopwatchDisplay");
+
+    if(el)el.textContent=display;
+
+}
+
+window.startStopwatch=function(){
+
+    if(jooStopwatchTimer)return;
+
+    jooStopwatchStart=Date.now();
+
+    jooStopwatchTimer=
+        setInterval(
+            updateStopwatch,
+            20
+        );
+
+};
+
+window.stopStopwatch=function(){
+
+    if(!jooStopwatchTimer)return;
+
+    jooStopwatchElapsed+=
+        Date.now()-jooStopwatchStart;
+
+    clearInterval(jooStopwatchTimer);
+
+    jooStopwatchTimer=null;
+
+};
+
+window.resetStopwatch=function(){
+
+    clearInterval(jooStopwatchTimer);
+
+    jooStopwatchTimer=null;
+
+    jooStopwatchElapsed=0;
+    jooStopwatchStart=Date.now();
+
+    updateStopwatch();
+
+};
+
+
+/* =========================================================
+   COUNTDOWN
+========================================================= */
+
+let jooCountdownTimer=null;
+
+function countdownTool(tool){
+
+    workspace(tool,`
+
+        ${field(
+            T.hours,
+            input("countHours","number","0")
+        )}
+
+        ${field(
+            T.minutes,
+            input("countMinutes","number","5")
+        )}
+
+        ${field(
+            T.seconds,
+            input("countSeconds","number","0")
+        )}
+
+        <div
+            id="countdownDisplay"
+            style="
+                font-size:42px;
+                font-weight:800;
+                text-align:center;
+                padding:20px;
+            ">
+            00:05:00
+        </div>
+
+        <div class="tool-actions">
+
+            <button
+                class="tool-btn primary"
+                onclick="startCountdown()">
+                ${T.start}
+            </button>
+
+            <button
+                class="tool-btn"
+                onclick="stopCountdown()">
+                ${T.stop}
+            </button>
+
+        </div>
+
+    `);
+
+}
+
+window.startCountdown=function(){
+
+    clearInterval(jooCountdownTimer);
+
+    let total=
+        Number(document.getElementById("countHours").value||0)*3600+
+        Number(document.getElementById("countMinutes").value||0)*60+
+        Number(document.getElementById("countSeconds").value||0);
+
+    if(total<=0)return;
+
+    const display=
+        document.getElementById("countdownDisplay");
+
+    function tick(){
+
+        const h=Math.floor(total/3600);
+
+        const m=Math.floor((total%3600)/60);
+
+        const s=total%60;
+
+        display.textContent=
+            String(h).padStart(2,"0")+":"+
+            String(m).padStart(2,"0")+":"+
+            String(s).padStart(2,"0");
+
+        if(total<=0){
+
+            clearInterval(jooCountdownTimer);
+
+            jooCountdownTimer=null;
+
+            jooToast(
+                currentLanguage==="ar"
+                ?"انتهى الوقت ⏰"
+                :"Time is up ⏰",
+                "⏰"
+            );
+
+            return;
+
+        }
+
+        total--;
+
+    }
+
+    tick();
+
+    jooCountdownTimer=
+        setInterval(
+            tick,
+            1000
+        );
+
+};
+
+window.stopCountdown=function(){
+
+    clearInterval(jooCountdownTimer);
+
+    jooCountdownTimer=null;
+
+};
+
+
+/* =========================================================
+   CLEAR
+========================================================= */
+
+window.jooClearTool=function(){
+
+    document.querySelectorAll(
+        ".tool-workspace input, .tool-workspace textarea"
+    ).forEach(el=>{
+
+        if(el.type==="checkbox")return;
+
+        if(el.type==="color")return;
+
+        el.value="";
+
+    });
+
+    const result=
+        document.getElementById("jooToolResult");
+
+    if(result)
+        result.textContent="";
+
+};
+
+
+/* =========================================================
+   COPY
+========================================================= */
+
+window.jooCopyResult=function(){
+
+    const result=
+        document.getElementById("jooToolResult");
+
+    if(!result)return;
+
+    const text=result.innerText;
+
+    if(!text)return;
+
+    navigator.clipboard.writeText(text)
+        .then(()=>{
+
+            if(typeof jooToast==="function")
+                jooToast(T.copied,"📋");
+
+        });
+
+};
+
+
+/* =========================================================
+   CONNECT OPEN TOOL
+========================================================= */
+
+try{
+
+    openTool = function(id){
+
+        jooRealOpenTool(id);
+
+    };
+
+}catch(e){
+
+    window.openTool=function(id){
+
+        jooRealOpenTool(id);
+
+    };
+
+}
+
+})();

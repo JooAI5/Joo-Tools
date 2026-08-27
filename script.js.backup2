@@ -1,0 +1,3894 @@
+const tools = [
+
+{
+id:"calculator",
+category:"🧮 Calculators",
+icon:"🧮",
+name:"Calculator",
+description:"Fast and clean calculations directly in your browser.",
+run:calculator
+},
+
+{
+id:"percentage",
+category:"🧮 Calculators",
+icon:"📊",
+name:"Percentage Calculator",
+description:"Calculate percentages quickly.",
+run:percentage
+},
+
+{
+id:"average",
+category:"🧮 Calculators",
+icon:"📈",
+name:"Average Calculator",
+description:"Find average, minimum and maximum values.",
+run:averageTool
+},
+
+{
+id:"random-number",
+category:"🎲 Generators",
+icon:"🎲",
+name:"Random Number",
+description:"Generate a random number between two values.",
+run:randomNumber
+},
+
+{
+id:"random-choice",
+category:"🎯 Generators",
+icon:"🎯",
+name:"Random Choice",
+description:"Choose randomly from a list.",
+run:randomChoice
+},
+
+{
+id:"uuid",
+category:"🎲 Generators",
+icon:"🆔",
+name:"UUID Generator",
+description:"Generate unique UUID identifiers.",
+run:uuidGenerator
+},
+
+{
+id:"gradient",
+category:"🎨 Design",
+icon:"🌈",
+name:"Gradient Generator",
+description:"Create beautiful CSS gradients.",
+run:gradientGenerator
+},
+
+{
+id:"palette",
+category:"🎨 Design",
+icon:"🎨",
+name:"Color Palette",
+description:"Generate beautiful color combinations.",
+run:paletteGenerator
+},
+
+{
+id:"text-cleaner",
+category:"📝 Text",
+icon:"🧹",
+name:"Text Cleaner",
+description:"Clean spaces and empty lines.",
+run:textCleaner
+},
+
+{
+id:"text-sorter",
+category:"📝 Text",
+icon:"🔤",
+name:"Text Sorter",
+description:"Sort text lines alphabetically.",
+run:textSorter
+},
+
+{
+id:"duplicate",
+category:"📝 Text",
+icon:"♻️",
+name:"Duplicate Remover",
+description:"Remove duplicate lines.",
+run:duplicateRemover
+},
+
+{
+id:"json",
+category:"💻 Developer",
+icon:"{}",
+name:"JSON Formatter",
+description:"Format and validate JSON.",
+run:jsonFormatter
+},
+
+{
+id:"url",
+category:"💻 Developer",
+icon:"🔗",
+name:"URL Encoder",
+description:"Encode and decode URLs locally.",
+run:urlEncoder
+},
+
+{
+id:"base64",
+category:"💻 Developer",
+icon:"🧬",
+name:"Base64",
+description:"Encode and decode Base64 text.",
+run:base64Tool
+},
+
+{
+id:"base",
+category:"💻 Developer",
+icon:"🔢",
+name:"Base Converter",
+description:"Convert numbers between bases.",
+run:baseConverter
+},
+
+{
+id:"hash",
+category:"🔐 Security",
+icon:"🔐",
+name:"SHA-256 Hash",
+description:"Generate SHA-256 hashes locally.",
+run:hashTool
+},
+
+{
+id:"password",
+category:"🔐 Security",
+icon:"🔑",
+name:"Password Generator",
+description:"Create strong random passwords locally.",
+run:passwordTool
+},
+
+{
+id:"units",
+category:"📏 Converters",
+icon:"📏",
+name:"Unit Converter",
+description:"Convert common measurement units.",
+run:unitTool
+},
+
+{
+id:"roman",
+category:"🔢 Number Tools",
+icon:"🏛️",
+name:"Roman Numerals",
+description:"Convert numbers into Roman numerals.",
+run:romanTool
+},
+
+{
+id:"number-words",
+category:"🔢 Number Tools",
+icon:"🔤",
+name:"Number To Words",
+description:"Convert numbers into English words.",
+run:numberWordsTool
+},
+
+{
+id:"age",
+category:"🧮 Calculators",
+icon:"🎂",
+name:"Age Calculator",
+description:"Calculate age from date of birth.",
+run:ageTool
+},
+
+{
+id:"stopwatch",
+category:"⏱️ Time",
+icon:"⏱️",
+name:"Stopwatch",
+description:"Precise browser stopwatch.",
+run:stopwatch
+},
+
+{
+id:"countdown",
+category:"⏳ Time",
+icon:"⏳",
+name:"Countdown",
+description:"Create a custom countdown.",
+run:countdown
+}
+
+];
+
+let favorites =
+JSON.parse(localStorage.getItem("jooFavorites") || "[]");
+
+let recent =
+JSON.parse(localStorage.getItem("jooRecent") || "[]");
+
+const sections =
+document.getElementById("toolSections");
+
+const search =
+document.getElementById("search");
+
+const modal =
+document.getElementById("toolModal");
+
+const area =
+document.getElementById("toolArea");
+
+const toast =
+document.getElementById("toast");
+
+
+function toolIntro(title, description){
+
+return `
+<div class="tool-intro">
+<h2>${title}</h2>
+<p>${description}</p>
+</div>
+`;
+
+}
+
+
+function resultPanel(id,label="Result"){
+
+return `
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>${label}</strong>
+
+<button
+class="copy-mini"
+onclick="copyElement('${id}')">
+
+COPY
+
+</button>
+
+</div>
+
+<div
+id="${id}"
+class="result-content empty">
+
+Waiting for input...
+
+</div>
+
+</div>
+`;
+
+}
+
+
+function setResult(id,text,type=""){
+
+const el =
+document.getElementById(id);
+
+if(!el)return;
+
+el.className="result-content";
+
+if(type)
+el.classList.add(type);
+
+el.textContent=text;
+
+}
+
+
+function showToast(text,icon="✓"){
+
+document.getElementById("toastText")
+.textContent=text;
+
+document.getElementById("toastIcon")
+.textContent=icon;
+
+toast.classList.add("show");
+
+clearTimeout(window.toastTimer);
+
+window.toastTimer =
+setTimeout(
+()=>toast.classList.remove("show"),
+2200
+);
+
+}
+
+
+function clearField(id){
+
+const el =
+document.getElementById(id);
+
+if(el)
+el.value="";
+
+showToast("Cleared","✓");
+
+}
+
+
+function copyElement(id){
+
+const el =
+document.getElementById(id);
+
+if(!el){
+
+showToast("Nothing to copy","!");
+
+return;
+
+}
+
+const text =
+el.value !== undefined
+? el.value
+: el.textContent;
+
+if(
+!text ||
+text.includes("Waiting for input")
+){
+
+showToast("Nothing to copy","!");
+
+return;
+
+}
+
+navigator.clipboard
+.writeText(text)
+.then(
+()=>showToast("Copied to clipboard","✓")
+)
+.catch(
+()=>showToast("Copy failed","!")
+);
+
+}
+
+
+function updateStats(){
+
+document.getElementById("toolCount")
+.textContent=tools.length;
+
+document.getElementById("favCount")
+.textContent=favorites.length;
+
+document.getElementById("recentCount")
+.textContent=recent.length;
+
+}
+
+
+function toolCard(tool){
+
+const active =
+favorites.includes(tool.id)
+? "active"
+: "";
+
+return `
+
+<article class="tool-card">
+
+<div class="tool-top">
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<button
+class="favorite ${active}"
+onclick="toggleFavorite('${tool.id}',event)">
+
+★
+
+</button>
+
+</div>
+
+<h3>
+${tool.name}
+</h3>
+
+<p>
+${tool.description}
+</p>
+
+<button
+class="open-button"
+onclick="openTool('${tool.id}')">
+
+Open Tool →
+
+</button>
+
+</article>
+
+`;
+
+}
+
+
+function render(list=tools){
+
+sections.innerHTML="";
+
+const grouped={};
+
+list.forEach(tool=>{
+
+if(!grouped[tool.category])
+grouped[tool.category]=[];
+
+grouped[tool.category].push(tool);
+
+});
+
+Object.entries(grouped).forEach(
+([category,list])=>{
+
+const section =
+document.createElement("section");
+
+section.className="category";
+
+section.innerHTML=`
+
+<div class="category-heading">
+
+<h2>${category}</h2>
+
+<span>${list.length} tools</span>
+
+</div>
+
+<div class="tools">
+
+${list.map(toolCard).join("")}
+
+</div>
+
+`;
+
+sections.appendChild(section);
+
+});
+
+updateStats();
+
+}
+
+
+function toggleFavorite(id,event){
+
+if(event)
+event.stopPropagation();
+
+if(favorites.includes(id)){
+
+favorites =
+favorites.filter(x=>x!==id);
+
+showToast(
+"Removed from favorites",
+"☆"
+);
+
+}else{
+
+favorites.push(id);
+
+showToast(
+"Added to favorites",
+"★"
+);
+
+}
+
+localStorage.setItem(
+"jooFavorites",
+JSON.stringify(favorites)
+);
+
+render();
+
+}
+
+
+function showFavorites(){
+
+const list =
+tools.filter(
+x=>favorites.includes(x.id)
+);
+
+document.getElementById("pageTitle")
+.textContent="Favorites";
+
+document.getElementById("pageSubtitle")
+.textContent="Your saved tools";
+
+document.getElementById("pageIcon")
+.textContent="★";
+
+if(!list.length){
+
+sections.innerHTML=`
+
+<div class="empty-state">
+
+<div class="empty-state-icon">
+★
+</div>
+
+<h3>No favorites yet</h3>
+
+<p>
+Tap the star on any tool to save it here.
+</p>
+
+</div>
+
+`;
+
+updateStats();
+
+return;
+
+}
+
+render(list);
+
+}
+
+
+function showRecent(){
+
+const list =
+recent
+.map(id=>tools.find(x=>x.id===id))
+.filter(Boolean);
+
+document.getElementById("pageTitle")
+.textContent="Recent";
+
+document.getElementById("pageSubtitle")
+.textContent="Your recently used tools";
+
+document.getElementById("pageIcon")
+.textContent="◷";
+
+if(!list.length){
+
+sections.innerHTML=`
+
+<div class="empty-state">
+
+<div class="empty-state-icon">
+◷
+</div>
+
+<h3>No recent tools</h3>
+
+<p>
+Tools you use will appear here.
+</p>
+
+</div>
+
+`;
+
+updateStats();
+
+return;
+
+}
+
+render(list);
+
+}
+
+
+function goHome(){
+
+document.getElementById("pageTitle")
+.textContent="All Tools";
+
+document.getElementById("pageSubtitle")
+.textContent=
+"Everything you need in one place";
+
+document.getElementById("pageIcon")
+.textContent="⌂";
+
+search.value="";
+
+render();
+
+}
+
+
+search.addEventListener(
+"input",
+()=>{
+
+const q =
+search.value.trim().toLowerCase();
+
+if(!q){
+
+render();
+
+return;
+
+}
+
+const result =
+tools.filter(tool=>
+
+tool.name.toLowerCase()
+.includes(q)
+
+||
+
+tool.description
+.toLowerCase()
+.includes(q)
+
+||
+
+tool.category
+.toLowerCase()
+.includes(q)
+
+);
+
+render(result);
+
+}
+);
+
+
+function openTool(id){
+
+const tool =
+tools.find(x=>x.id===id);
+
+if(!tool)return;
+
+recent=[
+id,
+...recent.filter(x=>x!==id)
+].slice(0,8);
+
+localStorage.setItem(
+"jooRecent",
+JSON.stringify(recent)
+);
+
+document.getElementById(
+"toolHeaderInfo"
+).innerHTML=`
+
+<div class="tool-icon">
+${tool.icon}
+</div>
+
+<div>
+
+<div class="tool-title">
+${tool.name}
+</div>
+
+<div class="tool-subtitle">
+${tool.category}
+</div>
+
+</div>
+
+`;
+
+area.innerHTML=`
+
+<div class="tool-ui">
+
+${tool.run()}
+
+</div>
+
+`;
+
+modal.classList.remove("hidden");
+
+updateStats();
+
+}
+
+
+function closeTool(){
+
+modal.classList.add("hidden");
+
+area.innerHTML="";
+
+}
+
+
+modal.addEventListener(
+"click",
+event=>{
+
+if(event.target===modal)
+closeTool();
+
+});
+
+
+document.addEventListener(
+"keydown",
+event=>{
+
+if(event.key==="Escape")
+closeTool();
+
+});
+
+
+document.querySelectorAll(
+".nav-item,.mobile-nav button"
+).forEach(button=>{
+
+button.addEventListener(
+"click",
+()=>{
+
+const page=button.dataset.page;
+
+if(page==="home")
+goHome();
+
+if(page==="favorites")
+showFavorites();
+
+if(page==="recent")
+showRecent();
+
+if(
+window.innerWidth<=850
+){
+
+document
+.querySelector(".sidebar")
+.classList
+.remove("open");
+
+}
+
+}
+);
+
+});
+
+
+document.getElementById(
+"mobileMenu"
+).addEventListener(
+"click",
+()=>{
+
+document
+.querySelector(".sidebar")
+.classList
+.toggle("open");
+
+});
+
+
+document.getElementById(
+"themeBtn"
+).addEventListener(
+"click",
+()=>{
+
+document.body
+.classList
+.toggle("light");
+
+const light =
+document.body
+.classList
+.contains("light");
+
+document.getElementById(
+"themeBtn"
+).textContent =
+light ? "🌙" : "☀️";
+
+localStorage.setItem(
+"jooTheme",
+light ? "light" : "dark"
+);
+
+});
+
+
+function calculate(){
+
+const value =
+document.getElementById("calc").value;
+
+if(
+!/^[0-9+*/().%\- \t]+$/.test(value)
+){
+
+setResult(
+"calcResult",
+"Invalid expression.",
+"error"
+);
+
+return;
+
+}
+
+try{
+
+const result =
+Function(
+'"use strict";return ('+
+value+
+')'
+)();
+
+setResult(
+"calcResult",
+String(result),
+"success"
+);
+
+showToast(
+"Calculation complete"
+);
+
+}catch{
+
+setResult(
+"calcResult",
+"Invalid calculation.",
+"error"
+);
+
+}
+
+}
+
+
+function calculator(){
+
+return `
+
+${toolIntro(
+"Calculator",
+"Fast and clean calculations directly in your browser."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Calculation
+<span>Example: 25 * 4 + 10</span>
+</label>
+
+<input
+id="calc"
+inputmode="decimal"
+placeholder="Enter an expression...">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculate()">
+
+Calculate
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('calc')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"calcResult",
+"Calculation Result"
+)}
+
+`;
+
+}
+
+
+function calculatePercentage(){
+
+const a =
+Number(
+document.getElementById(
+"percentValue"
+).value
+);
+
+const b =
+Number(
+document.getElementById(
+"percentRate"
+).value
+);
+
+if(!Number.isFinite(a)||!Number.isFinite(b)){
+
+showToast("Enter valid numbers","!");
+
+return;
+
+}
+
+document.getElementById(
+"percentageResult"
+).textContent =
+(a*b/100).toLocaleString();
+
+}
+
+
+function percentage(){
+
+return `
+
+${toolIntro(
+"Percentage Calculator",
+"Calculate percentages quickly."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="percentValue"
+type="number"
+placeholder="100">
+
+</div>
+
+<div class="field">
+
+<label>Percentage</label>
+
+<input
+id="percentRate"
+type="number"
+placeholder="20">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculatePercentage()">
+
+Calculate
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Result</strong>
+
+<span>Percentage</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="percentageResult"
+class="big-result-value">
+
+0
+
+</div>
+
+<div class="big-result-label">
+Calculated result
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function averageTool(){
+
+return `
+
+${toolIntro(
+"Average Calculator",
+"Calculate average, minimum, maximum and sum."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Numbers
+<span>Comma or space separated</span>
+</label>
+
+<textarea
+id="averageNumbers"
+placeholder="10, 20, 30, 40"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculateAverage()">
+
+Calculate Statistics
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"averageResult",
+"Statistics"
+)}
+
+`;
+
+}
+
+
+function calculateAverage(){
+
+const numbers =
+document.getElementById(
+"averageNumbers"
+)
+.value
+.split(/[,\s]+/)
+.map(Number)
+.filter(Number.isFinite);
+
+if(!numbers.length){
+
+setResult(
+"averageResult",
+"Enter at least one number.",
+"error"
+);
+
+return;
+
+}
+
+const sum =
+numbers.reduce(
+(a,b)=>a+b,
+0
+);
+
+const avg =
+sum/numbers.length;
+
+setResult(
+"averageResult",
+
+`Count: ${numbers.length}
+Sum: ${sum}
+Average: ${avg}
+Minimum: ${Math.min(...numbers)}
+Maximum: ${Math.max(...numbers)}`,
+
+"success"
+);
+
+}
+
+
+function generateRandom(){
+
+const min =
+Number(
+document.getElementById("min").value
+);
+
+const max =
+Number(
+document.getElementById("max").value
+);
+
+if(
+!Number.isFinite(min) ||
+!Number.isFinite(max) ||
+max<min
+){
+
+showToast(
+"Check the range",
+"!"
+);
+
+return;
+
+}
+
+document.getElementById(
+"randomResult"
+).textContent =
+Math.floor(
+Math.random()*(max-min+1)
+)+min;
+
+}
+
+
+function randomNumber(){
+
+return `
+
+${toolIntro(
+"Random Number",
+"Generate a random integer between any two numbers."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Minimum</label>
+
+<input
+id="min"
+type="number"
+value="1">
+
+</div>
+
+<div class="field">
+
+<label>Maximum</label>
+
+<input
+id="max"
+type="number"
+value="100">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateRandom()">
+
+Generate Number
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Generated Number</strong>
+
+<span>Random</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="randomResult"
+class="big-result-value">
+
+—
+
+</div>
+
+<div class="big-result-label">
+Your random number
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function chooseRandom(){
+
+const values =
+document.getElementById(
+"choices"
+)
+.value
+.split("\n")
+.map(x=>x.trim())
+.filter(Boolean);
+
+if(!values.length){
+
+showToast(
+"Enter some choices",
+"!"
+);
+
+return;
+
+}
+
+setResult(
+"choiceResult",
+values[
+Math.floor(
+Math.random()*values.length
+)
+],
+"success"
+);
+
+}
+
+
+function randomChoice(){
+
+return `
+
+${toolIntro(
+"Random Choice",
+"Let Joo Tools choose one item from your list."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Choices
+<span>One choice per line</span>
+</label>
+
+<textarea
+id="choices"
+placeholder="Pizza
+Burger
+Pasta
+Chicken"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="chooseRandom()">
+
+Choose Randomly
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"choiceResult",
+"Selected Choice"
+)}
+
+`;
+
+}
+
+
+function generateUUID(){
+
+setResult(
+"uuidResult",
+crypto.randomUUID(),
+"success"
+);
+
+}
+
+
+function uuidGenerator(){
+
+return `
+
+${toolIntro(
+"UUID Generator",
+"Generate unique identifiers instantly."
+)}
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateUUID()">
+
+Generate UUID
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('uuidResult')">
+
+Copy
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"uuidResult",
+"Generated UUID"
+)}
+
+`;
+
+}
+
+
+function randomColor(){
+
+return "#"+
+Math.floor(
+Math.random()*16777215
+)
+.toString(16)
+.padStart(6,"0");
+
+}
+
+
+function generateGradient(){
+
+const a=randomColor();
+const b=randomColor();
+
+const gradient =
+`linear-gradient(135deg, ${a}, ${b})`;
+
+document.getElementById(
+"gradientBox"
+).style.background =
+gradient;
+
+document.getElementById(
+"gradientPreviewText"
+).textContent =
+gradient;
+
+setResult(
+"gradientResult",
+gradient,
+"success"
+);
+
+}
+
+
+function gradientGenerator(){
+
+return `
+
+${toolIntro(
+"Gradient Generator",
+"Create modern CSS gradients and copy the generated code."
+)}
+
+<div
+id="gradientBox"
+class="color-preview"
+style="
+background:
+linear-gradient(
+135deg,
+#7c5cff,
+#00d4ff
+);
+">
+
+<div
+class="color-preview-info"
+id="gradientPreviewText">
+
+linear-gradient(135deg,#7c5cff,#00d4ff)
+
+</div>
+
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateGradient()">
+
+Generate Gradient
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('gradientResult')">
+
+Copy CSS
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"gradientResult",
+"CSS Gradient"
+)}
+
+`;
+
+}
+
+
+function generatePalette(){
+
+const box =
+document.getElementById(
+"paletteResult"
+);
+
+box.innerHTML="";
+
+for(let i=0;i<5;i++){
+
+const color =
+randomColor();
+
+const item =
+document.createElement("div");
+
+item.className =
+"palette-color";
+
+item.style.background =
+color;
+
+item.innerHTML =
+`<span>${color.toUpperCase()}</span>`;
+
+item.onclick=()=>{
+
+navigator.clipboard
+.writeText(color);
+
+showToast(
+"Color copied",
+"✓"
+);
+
+};
+
+box.appendChild(item);
+
+}
+
+}
+
+
+function paletteGenerator(){
+
+return `
+
+${toolIntro(
+"Color Palette",
+"Generate a five-color palette and copy colors instantly."
+)}
+
+<div
+id="paletteResult"
+class="palette-grid">
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generatePalette()">
+
+Generate Palette
+
+</button>
+
+</div>
+
+</div>
+
+<div class="tool-status">
+
+<span class="tool-status-dot"></span>
+
+Click any color to copy its HEX value
+
+</div>
+
+`;
+
+}
+
+
+function cleanTextSpaces(){
+
+const el =
+document.getElementById(
+"cleanerText"
+);
+
+el.value =
+el.value
+.replace(/[ \t]+/g," ")
+.trim();
+
+}
+
+
+function cleanEmptyLines(){
+
+const el =
+document.getElementById(
+"cleanerText"
+);
+
+el.value =
+el.value
+.split("\n")
+.filter(x=>x.trim())
+.join("\n");
+
+}
+
+
+function cleanAllText(){
+
+cleanTextSpaces();
+
+cleanEmptyLines();
+
+showToast(
+"Text cleaned",
+"✓"
+);
+
+}
+
+
+function textCleaner(){
+
+return `
+
+${toolIntro(
+"Text Cleaner",
+"Clean messy text and organize your content."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input Text
+<span>Paste your text</span>
+</label>
+
+<textarea
+id="cleanerText"
+placeholder="Paste your text here..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="cleanAllText()">
+
+Clean All
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="cleanTextSpaces()">
+
+Spaces
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="cleanEmptyLines()">
+
+Empty Lines
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('cleanerText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function sortText(reverse=false){
+
+const el =
+document.getElementById(
+"sortText"
+);
+
+let lines =
+el.value
+.split("\n")
+.filter(Boolean);
+
+lines.sort(
+(a,b)=>a.localeCompare(b)
+);
+
+if(reverse)
+lines.reverse();
+
+el.value =
+lines.join("\n");
+
+}
+
+
+function textSorter(){
+
+return `
+
+${toolIntro(
+"Text Sorter",
+"Sort lines alphabetically in either direction."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Text
+<span>One item per line</span>
+</label>
+
+<textarea
+id="sortText"
+placeholder="Apple
+Banana
+Orange"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="sortText()">
+
+A → Z
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="sortText(true)">
+
+Z → A
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function removeDuplicates(){
+
+const el =
+document.getElementById(
+"duplicateText"
+);
+
+el.value =
+[
+...new Set(
+el.value
+.split("\n")
+)
+]
+.join("\n");
+
+showToast(
+"Duplicates removed",
+"✓"
+);
+
+}
+
+
+function duplicateRemover(){
+
+return `
+
+${toolIntro(
+"Duplicate Remover",
+"Remove repeated lines instantly."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Text
+<span>One item per line</span>
+</label>
+
+<textarea
+id="duplicateText"
+placeholder="Apple
+Apple
+Orange
+Banana
+Orange"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="removeDuplicates()">
+
+Remove Duplicates
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('duplicateText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+function formatJSON(){
+
+try{
+
+const obj =
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+setResult(
+"jsonResult",
+JSON.stringify(
+obj,
+null,
+2
+),
+"success"
+);
+
+}catch{
+
+setResult(
+"jsonResult",
+"Invalid JSON.",
+"error"
+);
+
+}
+
+}
+
+
+function minifyJSON(){
+
+try{
+
+const obj =
+JSON.parse(
+document.getElementById(
+"jsonText"
+).value
+);
+
+setResult(
+"jsonResult",
+JSON.stringify(obj),
+"success"
+);
+
+}catch{
+
+setResult(
+"jsonResult",
+"Invalid JSON.",
+"error"
+);
+
+}
+
+}
+
+
+function jsonFormatter(){
+
+return `
+
+${toolIntro(
+"JSON Formatter",
+"Format, minify and validate JSON."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+JSON Input
+<span>Valid JSON required</span>
+</label>
+
+<textarea
+id="jsonText"
+class="code-result"
+placeholder='{
+  "name": "Joo",
+  "version": 4
+}'></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="formatJSON()">
+
+Format JSON
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="minifyJSON()">
+
+Minify
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('jsonText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"jsonResult",
+"Formatted Output"
+)}
+
+`;
+
+}
+
+
+function encodeURL(){
+
+setResult(
+"urlResult",
+encodeURIComponent(
+document.getElementById(
+"urlText"
+).value
+),
+"success"
+);
+
+}
+
+
+function decodeURL(){
+
+try{
+
+setResult(
+"urlResult",
+decodeURIComponent(
+document.getElementById(
+"urlText"
+).value
+),
+"success"
+);
+
+}catch{
+
+setResult(
+"urlResult",
+"Invalid encoded URL.",
+"error"
+);
+
+}
+
+}
+
+
+function urlEncoder(){
+
+return `
+
+${toolIntro(
+"URL Encoder / Decoder",
+"Encode and decode URL text locally."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input
+</label>
+
+<textarea
+id="urlText"
+placeholder="https://example.com/hello world"></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="encodeURL()">
+
+Encode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="decodeURL()">
+
+Decode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('urlText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"urlResult",
+"Output"
+)}
+
+`;
+
+}
+
+
+function encodeBase64(){
+
+const text =
+document.getElementById(
+"base64Input"
+).value;
+
+const bytes =
+new TextEncoder()
+.encode(text);
+
+let binary="";
+
+bytes.forEach(
+b=>binary+=
+String.fromCharCode(b)
+);
+
+setResult(
+"base64Result",
+btoa(binary),
+"success"
+);
+
+}
+
+
+function decodeBase64(){
+
+try{
+
+const binary =
+atob(
+document.getElementById(
+"base64Input"
+).value
+);
+
+const bytes =
+Uint8Array.from(
+binary,
+x=>x.charCodeAt(0)
+);
+
+setResult(
+"base64Result",
+new TextDecoder()
+.decode(bytes),
+"success"
+);
+
+}catch{
+
+setResult(
+"base64Result",
+"Invalid Base64.",
+"error"
+);
+
+}
+
+}
+
+
+function base64Tool(){
+
+return `
+
+${toolIntro(
+"Base64 Encoder / Decoder",
+"Encode or decode text without uploading anything."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Input
+<span>Text / Base64</span>
+</label>
+
+<textarea
+id="base64Input"
+placeholder="Enter your text..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="encodeBase64()">
+
+Encode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="decodeBase64()">
+
+Decode
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('base64Input')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"base64Result",
+"Output"
+)}
+
+`;
+
+}
+
+
+function convertBase(){
+
+const value =
+document.getElementById(
+"baseNumber"
+).value;
+
+const from =
+Number(
+document.getElementById(
+"fromBase"
+).value
+);
+
+const to =
+Number(
+document.getElementById(
+"toBase"
+).value
+);
+
+const decimal =
+parseInt(
+value,
+from
+);
+
+if(
+isNaN(decimal) ||
+from<2 ||
+from>36 ||
+to<2 ||
+to>36
+){
+
+setResult(
+"baseResult",
+"Invalid number or base.",
+"error"
+);
+
+return;
+
+}
+
+setResult(
+"baseResult",
+decimal
+.toString(to)
+.toUpperCase(),
+"success"
+);
+
+}
+
+
+function baseConverter(){
+
+return `
+
+${toolIntro(
+"Base Converter",
+"Convert numbers between bases 2 and 36."
+)}
+
+<div class="tool-section">
+
+<div class="tool-grid">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="baseNumber"
+placeholder="FF">
+
+</div>
+
+<div class="field">
+
+<label>From Base</label>
+
+<input
+id="fromBase"
+type="number"
+min="2"
+max="36"
+value="16">
+
+</div>
+
+<div class="field">
+
+<label>To Base</label>
+
+<input
+id="toBase"
+type="number"
+min="2"
+max="36"
+value="10">
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertBase()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"baseResult",
+"Converted Value"
+)}
+
+`;
+
+}
+
+
+async function generateSHA256(){
+
+const data =
+new TextEncoder()
+.encode(
+document.getElementById(
+"hashText"
+).value
+);
+
+const hash =
+await crypto.subtle.digest(
+"SHA-256",
+data
+);
+
+const hex =
+[...new Uint8Array(hash)]
+.map(
+b=>b.toString(16).padStart(2,"0")
+)
+.join("");
+
+setResult(
+"hashResult",
+hex,
+"success"
+);
+
+}
+
+
+function hashTool(){
+
+return `
+
+${toolIntro(
+"SHA-256 Hash",
+"Generate a SHA-256 hash directly in your browser."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Text</label>
+
+<textarea
+id="hashText"
+placeholder="Enter text to hash..."></textarea>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generateSHA256()">
+
+Generate Hash
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="clearField('hashText')">
+
+Clear
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"hashResult",
+"SHA-256 Result"
+)}
+
+`;
+
+}
+
+
+function generatePassword(){
+
+const length =
+Number(
+document.getElementById(
+"passwordLength"
+).value
+);
+
+const chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+"abcdefghijklmnopqrstuvwxyz"+
+"0123456789"+
+"!@#$%^&*()_+-=[]{}";
+
+const array =
+new Uint32Array(length);
+
+crypto.getRandomValues(array);
+
+let password="";
+
+for(let i=0;i<length;i++){
+
+password +=
+chars[
+array[i]%chars.length
+];
+
+}
+
+setResult(
+"passwordResult",
+password,
+"success"
+);
+
+}
+
+
+function passwordTool(){
+
+return `
+
+${toolIntro(
+"Password Generator",
+"Generate strong random passwords locally."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>
+Password Length
+<span id="lengthLabel">20</span>
+</label>
+
+<div class="range-wrap">
+
+<input
+id="passwordLength"
+type="range"
+min="8"
+max="64"
+value="20"
+oninput="
+document.getElementById('lengthLabel').textContent=this.value;
+document.getElementById('rangeValue').textContent=this.value;
+">
+
+<div
+id="rangeValue"
+class="range-value">
+
+20
+
+</div>
+
+</div>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="generatePassword()">
+
+Generate Password
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="copyElement('passwordResult')">
+
+Copy
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"passwordResult",
+"Generated Password"
+)}
+
+`;
+
+}
+
+
+function convertUnit(){
+
+const value =
+Number(
+document.getElementById(
+"unitValue"
+).value
+);
+
+const type =
+document.getElementById(
+"unitType"
+).value;
+
+const map={
+
+"km-m":value=>value*1000,
+"m-km":value=>value/1000,
+"m-cm":value=>value*100,
+"cm-m":value=>value/100,
+"kg-g":value=>value*1000,
+"g-kg":value=>value/1000,
+"lb-kg":value=>value*.45359237,
+"kg-lb":value=>value*2.20462262
+
+};
+
+if(!map[type])return;
+
+setResult(
+"unitResult",
+String(map[type](value)),
+"success"
+);
+
+}
+
+
+function unitTool(){
+
+return `
+
+${toolIntro(
+"Unit Converter",
+"Convert common measurements instantly."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Value</label>
+
+<input
+id="unitValue"
+type="number"
+placeholder="100">
+
+</div>
+
+<div class="field">
+
+<label>Conversion</label>
+
+<select id="unitType">
+
+<option value="km-m">
+Kilometers → Meters
+</option>
+
+<option value="m-km">
+Meters → Kilometers
+</option>
+
+<option value="m-cm">
+Meters → Centimeters
+</option>
+
+<option value="cm-m">
+Centimeters → Meters
+</option>
+
+<option value="kg-g">
+Kilograms → Grams
+</option>
+
+<option value="g-kg">
+Grams → Kilograms
+</option>
+
+<option value="lb-kg">
+Pounds → Kilograms
+</option>
+
+<option value="kg-lb">
+Kilograms → Pounds
+</option>
+
+</select>
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertUnit()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"unitResult",
+"Converted Value"
+)}
+
+`;
+
+}
+
+
+function convertToRoman(){
+
+let n =
+Number(
+document.getElementById(
+"romanNumber"
+).value
+);
+
+if(
+!Number.isInteger(n) ||
+n<1 ||
+n>3999
+){
+
+showToast(
+"Enter a number from 1 to 3999",
+"!"
+);
+
+return;
+
+}
+
+const values=[
+[1000,"M"],
+[900,"CM"],
+[500,"D"],
+[400,"CD"],
+[100,"C"],
+[90,"XC"],
+[50,"L"],
+[40,"XL"],
+[10,"X"],
+[9,"IX"],
+[5,"V"],
+[4,"IV"],
+[1,"I"]
+];
+
+let result="";
+
+for(
+const [v,s]
+of values
+){
+
+while(n>=v){
+
+result+=s;
+n-=v;
+
+}
+
+}
+
+setResult(
+"romanResult",
+result,
+"success"
+);
+
+}
+
+
+function romanTool(){
+
+return `
+
+${toolIntro(
+"Roman Numerals",
+"Convert numbers from 1 to 3999 into Roman numerals."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="romanNumber"
+type="number"
+min="1"
+max="3999"
+placeholder="2026">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertToRoman()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"romanResult",
+"Roman Numeral"
+)}
+
+`;
+
+}
+
+
+function numberToWords(n){
+
+const ones=[
+"zero","one","two","three","four",
+"five","six","seven","eight","nine",
+"ten","eleven","twelve","thirteen",
+"fourteen","fifteen","sixteen",
+"seventeen","eighteen","nineteen"
+];
+
+const tens=[
+"","","twenty","thirty","forty",
+"fifty","sixty","seventy","eighty","ninety"
+];
+
+if(n<20)
+return ones[n];
+
+if(n<100)
+return tens[
+Math.floor(n/10)
+]+
+(n%10?
+" "+ones[n%10]:"");
+
+if(n<1000)
+return ones[
+Math.floor(n/100)
+]+
+" hundred"+
+(n%100?
+" "+numberToWords(n%100):
+"");
+
+if(n<1000000)
+return numberToWords(
+Math.floor(n/1000)
+)+
+" thousand"+
+(n%1000?
+" "+numberToWords(n%1000):
+"");
+
+return numberToWords(
+Math.floor(n/1000000)
+)+
+" million"+
+(n%1000000?
+" "+numberToWords(n%1000000):
+"");
+
+}
+
+
+function convertNumberWords(){
+
+const n =
+Number(
+document.getElementById(
+"wordsNumber"
+).value
+);
+
+if(
+!Number.isInteger(n) ||
+n<0 ||
+n>999999999
+){
+
+showToast(
+"Enter a number from 0 to 999999999",
+"!"
+);
+
+return;
+
+}
+
+setResult(
+"wordsResult",
+numberToWords(n),
+"success"
+);
+
+}
+
+
+function numberWordsTool(){
+
+return `
+
+${toolIntro(
+"Number To Words",
+"Convert numbers into English words."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Number</label>
+
+<input
+id="wordsNumber"
+type="number"
+min="0"
+max="999999999"
+placeholder="2026">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="convertNumberWords()">
+
+Convert
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"wordsResult",
+"Words"
+)}
+
+`;
+
+}
+
+
+function calculateAge(){
+
+const value =
+document.getElementById(
+"birthDate"
+).value;
+
+if(!value){
+
+showToast(
+"Select your birth date",
+"!"
+);
+
+return;
+
+}
+
+const birth =
+new Date(
+value+"T00:00:00"
+);
+
+const today =
+new Date();
+
+let years =
+today.getFullYear()-
+birth.getFullYear();
+
+let months =
+today.getMonth()-
+birth.getMonth();
+
+let days =
+today.getDate()-
+birth.getDate();
+
+if(days<0){
+
+months--;
+
+days +=
+new Date(
+today.getFullYear(),
+today.getMonth(),
+0
+).getDate();
+
+}
+
+if(months<0){
+
+years--;
+
+months+=12;
+
+}
+
+setResult(
+"ageResult",
+`${years} years, ${months} months, ${days} days`,
+"success"
+);
+
+}
+
+
+function ageTool(){
+
+return `
+
+${toolIntro(
+"Age Calculator",
+"Calculate your age precisely from your birth date."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Date of Birth</label>
+
+<input
+id="birthDate"
+type="date">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="calculateAge()">
+
+Calculate Age
+
+</button>
+
+</div>
+
+</div>
+
+${resultPanel(
+"ageResult",
+"Your Age"
+)}
+
+`;
+
+}
+
+
+let stopwatchTimer=null;
+let stopwatchSeconds=0;
+
+function startStopwatch(){
+
+if(stopwatchTimer)
+return;
+
+stopwatchTimer =
+setInterval(()=>{
+
+stopwatchSeconds++;
+
+const h =
+Math.floor(
+stopwatchSeconds/3600
+);
+
+const m =
+Math.floor(
+(stopwatchSeconds%3600)/60
+);
+
+const s =
+stopwatchSeconds%60;
+
+const display =
+document.getElementById(
+"stopwatchDisplay"
+);
+
+if(display){
+
+display.textContent =
+`${String(h).padStart(2,"0")}:`+
+`${String(m).padStart(2,"0")}:`+
+`${String(s).padStart(2,"0")}`;
+
+}
+
+},1000);
+
+}
+
+
+function pauseStopwatch(){
+
+clearInterval(
+stopwatchTimer
+);
+
+stopwatchTimer=null;
+
+}
+
+
+function resetStopwatch(){
+
+pauseStopwatch();
+
+stopwatchSeconds=0;
+
+const display =
+document.getElementById(
+"stopwatchDisplay"
+);
+
+if(display)
+display.textContent=
+"00:00:00";
+
+}
+
+
+function stopwatch(){
+
+return `
+
+${toolIntro(
+"Stopwatch",
+"Precise browser-based stopwatch."
+)}
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Timer</strong>
+
+<span>Live</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="stopwatchDisplay"
+class="big-result-value">
+
+00:00:00
+
+</div>
+
+</div>
+
+</div>
+
+<div class="tool-section">
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="startStopwatch()">
+
+Start
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="pauseStopwatch()">
+
+Pause
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="resetStopwatch()">
+
+Reset
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+let countdownTimer=null;
+
+function updateCountdown(seconds){
+
+const m =
+Math.floor(seconds/60);
+
+const s =
+seconds%60;
+
+const display =
+document.getElementById(
+"countdownResult"
+);
+
+if(display){
+
+display.textContent =
+`${String(m).padStart(2,"0")}:`+
+`${String(s).padStart(2,"0")}`;
+
+}
+
+}
+
+
+function startCountdown(){
+
+let seconds =
+Number(
+document.getElementById(
+"countdownSeconds"
+).value
+);
+
+if(
+!Number.isInteger(seconds) ||
+seconds<=0
+){
+
+showToast(
+"Enter valid seconds",
+"!"
+);
+
+return;
+
+}
+
+clearInterval(
+countdownTimer
+);
+
+updateCountdown(seconds);
+
+countdownTimer =
+setInterval(()=>{
+
+seconds--;
+
+updateCountdown(seconds);
+
+if(seconds<=0){
+
+clearInterval(
+countdownTimer
+);
+
+showToast(
+"Countdown finished",
+"✓"
+);
+
+}
+
+},1000);
+
+}
+
+
+function stopCountdown(){
+
+clearInterval(
+countdownTimer
+);
+
+countdownTimer=null;
+
+}
+
+
+function countdown(){
+
+return `
+
+${toolIntro(
+"Countdown",
+"Create a simple countdown timer."
+)}
+
+<div class="tool-section">
+
+<div class="field">
+
+<label>Seconds</label>
+
+<input
+id="countdownSeconds"
+type="number"
+min="1"
+placeholder="60">
+
+</div>
+
+<div class="tool-toolbar">
+
+<button
+class="tool-btn"
+onclick="startCountdown()">
+
+Start
+
+</button>
+
+<button
+class="tool-btn secondary"
+onclick="stopCountdown()">
+
+Stop
+
+</button>
+
+</div>
+
+</div>
+
+<div class="result-panel">
+
+<div class="result-header">
+
+<strong>Remaining</strong>
+
+<span>Timer</span>
+
+</div>
+
+<div class="big-result">
+
+<div
+id="countdownResult"
+class="big-result-value">
+
+00:00
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+/* =========================================
+   THEME
+========================================= */
+
+(function(){
+
+const saved =
+localStorage.getItem(
+"jooTheme"
+);
+
+if(saved==="light"){
+
+document.body
+.classList
+.add("light");
+
+const btn =
+document.getElementById(
+"themeBtn"
+);
+
+if(btn)
+btn.textContent="🌙";
+
+}
+
+})();
+
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+render();
+
+
+
+/* =========================================
+   JOO TOOLS - LANGUAGE SWITCHER
+========================================= */
+
+const translations = {
+
+en: {
+    allTools: "All Tools",
+    favorites: "Favorites",
+    recent: "Recent",
+    everything: "Everything you need in one place",
+    yourSaved: "Your saved tools",
+    recentlyUsed: "Your recently used tools",
+    searchPlaceholder: "Search tools...",
+    tools: "tools",
+    open: "Open Tool →",
+    noFavorites: "No favorites yet",
+    noFavoritesText: "Tap the star on any tool to save it here.",
+    noRecent: "No recent tools",
+    noRecentText: "Tools you use will appear here.",
+    language: "العربية"
+},
+
+ar: {
+    allTools: "كل الأدوات",
+    favorites: "المفضلة",
+    recent: "الأخيرة",
+    everything: "كل ما تحتاجه في مكان واحد",
+    yourSaved: "الأدوات المحفوظة لديك",
+    recentlyUsed: "الأدوات التي استخدمتها مؤخرًا",
+    searchPlaceholder: "ابحث عن أداة...",
+    tools: "أدوات",
+    open: "فتح الأداة ←",
+    noFavorites: "لا توجد أدوات مفضلة",
+    noFavoritesText: "اضغط على النجمة بجانب أي أداة لإضافتها هنا.",
+    noRecent: "لا توجد أدوات حديثة",
+    noRecentText: "الأدوات التي تستخدمها ستظهر هنا."
+}
+
+};
+
+let currentLanguage =
+localStorage.getItem("jooLanguage") || "en";
+
+
+function createLanguageSwitcher(){
+
+    if(document.getElementById("languageBtn"))
+        return;
+
+    const searchElement =
+        document.getElementById("search");
+
+    const themeButton =
+        document.getElementById("themeBtn");
+
+    const button =
+        document.createElement("button");
+
+    button.id = "languageBtn";
+
+    button.className = "language-btn";
+
+    button.type = "button";
+
+    button.innerHTML = `
+        <span class="language-globe">🌐</span>
+        <span id="languageText">
+            ${currentLanguage === "en" ? "العربية" : "English"}
+        </span>
+    `;
+
+    button.title = "Change Language";
+
+    button.addEventListener(
+        "click",
+        toggleLanguage
+    );
+
+    if(searchElement){
+
+        searchElement.parentNode.insertBefore(
+            button,
+            searchElement.nextSibling
+        );
+
+    }else if(themeButton){
+
+        themeButton.parentNode.insertBefore(
+            button,
+            themeButton
+        );
+
+    }else{
+
+        document.body.appendChild(button);
+
+    }
+
+}
+
+
+function toggleLanguage(){
+
+    currentLanguage =
+        currentLanguage === "en"
+        ? "ar"
+        : "en";
+
+    localStorage.setItem(
+        "jooLanguage",
+        currentLanguage
+    );
+
+    applyLanguage();
+
+}
+
+
+function applyLanguage(){
+
+    const t =
+        translations[currentLanguage];
+
+    document.documentElement.lang =
+        currentLanguage;
+
+    document.documentElement.dir =
+        currentLanguage === "ar"
+        ? "rtl"
+        : "ltr";
+
+    const languageText =
+        document.getElementById(
+            "languageText"
+        );
+
+    if(languageText){
+
+        languageText.textContent =
+            currentLanguage === "en"
+            ? "العربية"
+            : "English";
+
+    }
+
+    if(search){
+
+        search.placeholder =
+            t.searchPlaceholder;
+
+    }
+
+    updateStaticTexts();
+
+    render();
+
+}
+
+
+function updateStaticTexts(){
+
+    const t =
+        translations[currentLanguage];
+
+    const pageTitle =
+        document.getElementById("pageTitle");
+
+    const pageSubtitle =
+        document.getElementById("pageSubtitle");
+
+    if(
+        pageTitle &&
+        (
+            pageTitle.textContent === "All Tools" ||
+            pageTitle.textContent === "كل الأدوات"
+        )
+    ){
+
+        pageTitle.textContent =
+            t.allTools;
+
+    }
+
+    if(
+        pageSubtitle &&
+        (
+            pageSubtitle.textContent ===
+                "Everything you need in one place" ||
+            pageSubtitle.textContent ===
+                "كل ما تحتاجه في مكان واحد"
+        )
+    ){
+
+        pageSubtitle.textContent =
+            t.everything;
+
+    }
+
+}
+
+
+const originalToolCard =
+toolCard;
+
+toolCard = function(tool){
+
+    const t =
+        translations[currentLanguage];
+
+    const active =
+        favorites.includes(tool.id)
+        ? "active"
+        : "";
+
+    const name =
+        tool.name;
+
+    const description =
+        tool.description;
+
+    return `
+
+    <article class="tool-card">
+
+        <div class="tool-top">
+
+            <div class="tool-icon">
+                ${tool.icon}
+            </div>
+
+            <button
+                class="favorite ${active}"
+                onclick="toggleFavorite('${tool.id}',event)"
+                aria-label="Favorite">
+
+                ★
+
+            </button>
+
+        </div>
+
+        <h3>
+            ${name}
+        </h3>
+
+        <p>
+            ${description}
+        </p>
+
+        <button
+            class="open-button"
+            onclick="openTool('${tool.id}')">
+
+            ${t.open}
+
+        </button>
+
+    </article>
+
+    `;
+
+};
+
+
+const originalRender =
+render;
+
+render = function(list=tools){
+
+    sections.innerHTML="";
+
+    const grouped={};
+
+    list.forEach(tool=>{
+
+        if(!grouped[tool.category])
+            grouped[tool.category]=[];
+
+        grouped[tool.category].push(tool);
+
+    });
+
+    Object.entries(grouped).forEach(
+        ([category,list])=>{
+
+            const section =
+                document.createElement("section");
+
+            section.className =
+                "category";
+
+            const t =
+                translations[currentLanguage];
+
+            section.innerHTML = `
+
+                <div class="category-heading">
+
+                    <h2>
+                        ${category}
+                    </h2>
+
+                    <span>
+                        ${list.length}
+                        ${t.tools}
+                    </span>
+
+                </div>
+
+                <div class="tools">
+
+                    ${list.map(toolCard).join("")}
+
+                </div>
+
+            `;
+
+            sections.appendChild(section);
+
+        }
+    );
+
+    updateStats();
+
+};
+
+
+const originalGoHome =
+goHome;
+
+goHome = function(){
+
+    document.getElementById("pageTitle")
+        .textContent =
+        translations[currentLanguage].allTools;
+
+    document.getElementById("pageSubtitle")
+        .textContent =
+        translations[currentLanguage].everything;
+
+    document.getElementById("pageIcon")
+        .textContent="⌂";
+
+    search.value="";
+
+    render();
+
+};
+
+
+const originalShowFavorites =
+showFavorites;
+
+showFavorites = function(){
+
+    const t =
+        translations[currentLanguage];
+
+    const list =
+        tools.filter(
+            x=>favorites.includes(x.id)
+        );
+
+    document.getElementById("pageTitle")
+        .textContent =
+        t.favorites;
+
+    document.getElementById("pageSubtitle")
+        .textContent =
+        t.yourSaved;
+
+    document.getElementById("pageIcon")
+        .textContent="★";
+
+    if(!list.length){
+
+        sections.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                ★
+            </div>
+
+            <h3>
+                ${t.noFavorites}
+            </h3>
+
+            <p>
+                ${t.noFavoritesText}
+            </p>
+
+        </div>
+
+        `;
+
+        updateStats();
+
+        return;
+
+    }
+
+    render(list);
+
+};
+
+
+const originalShowRecent =
+showRecent;
+
+showRecent = function(){
+
+    const t =
+        translations[currentLanguage];
+
+    const list =
+        recent
+        .map(id=>tools.find(x=>x.id===id))
+        .filter(Boolean);
+
+    document.getElementById("pageTitle")
+        .textContent =
+        t.recent;
+
+    document.getElementById("pageSubtitle")
+        .textContent =
+        t.recentlyUsed;
+
+    document.getElementById("pageIcon")
+        .textContent="◷";
+
+    if(!list.length){
+
+        sections.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                ◷
+            </div>
+
+            <h3>
+                ${t.noRecent}
+            </h3>
+
+            <p>
+                ${t.noRecentText}
+            </p>
+
+        </div>
+
+        `;
+
+        updateStats();
+
+        return;
+
+    }
+
+    render(list);
+
+};
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    ()=>{
+
+        createLanguageSwitcher();
+
+        applyLanguage();
+
+    }
+);
+
+
+/* In case script loads after DOM */
+if(document.readyState !== "loading"){
+
+    createLanguageSwitcher();
+
+    applyLanguage();
+
+}
+
