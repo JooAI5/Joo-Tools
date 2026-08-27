@@ -28,51 +28,6 @@ script:"tools/image-converter.js",
 init:"imageConverter"
 },
 {
-id:"qr-generator",
-category:"🛠️ Utilities",
-icon:"▦",
-name:"QR Code Generator",
-description:"Create QR codes locally in your browser.",
-script:"tools/qr-generator.js",
-init:"qrGenerator"
-},
-{
-id:"text-counter",
-category:"📝 Text",
-icon:"📝",
-name:"Word & Character Counter",
-description:"Count words, characters and lines.",
-script:"tools/text-counter.js",
-init:"textCounter"
-},
-{
-id:"case-converter",
-category:"📝 Text",
-icon:"🔤",
-name:"Case Converter",
-description:"Convert text capitalization instantly.",
-script:"tools/case-converter.js",
-init:"caseConverter"
-},
-{
-id:"text-diff",
-category:"📝 Text",
-icon:"🔍",
-name:"Text Diff",
-description:"Compare two texts line by line.",
-script:"tools/text-diff.js",
-init:"textDiff"
-},
-{
-id:"color-converter",
-category:"🎨 Design",
-icon:"🎨",
-name:"Color Converter",
-description:"Convert HEX colors to RGB and HSL.",
-script:"tools/color-converter.js",
-init:"colorConverter"
-},
-{
 id:"calculator",
 category:"🧮 Calculators",
 icon:"🧮",
@@ -746,7 +701,8 @@ render(result);
 
 function openTool(id){
 
-const tool=tools.find(x=>x.id===id);
+const tool =
+tools.find(x=>x.id===id);
 
 if(!tool)return;
 
@@ -782,12 +738,6 @@ ${tool.category}
 
 `;
 
-area.innerHTML="";
-
-modal.classList.remove("hidden");
-
-if(tool.run){
-
 area.innerHTML=`
 
 <div class="tool-ui">
@@ -798,85 +748,12 @@ ${tool.run()}
 
 `;
 
-}else if(tool.init){
-
-if(tool.script && !document.querySelector(
-`script[src="${tool.script}"]`
-)){
-
-const script=document.createElement("script");
-
-script.src=tool.script;
-
-script.onload=()=>{
-if(window.JooTools &&
-window.JooTools[tool.init] &&
-typeof window.JooTools[tool.init].init==="function"){
-
-window.JooTools[tool.init].init(area);
-
-}else{
-
-area.innerHTML=`
-<div class="tool-ui">
-<div class="tool-error">
-Tool loaded but initialization failed.
-</div>
-</div>
-`;
-
-}
-};
-
-script.onerror=()=>{
-area.innerHTML=`
-<div class="tool-ui">
-<div class="tool-error">
-Unable to load this tool.
-</div>
-</div>
-`;
-};
-
-document.body.appendChild(script);
-
-}else{
-
-if(window.JooTools &&
-window.JooTools[tool.init] &&
-typeof window.JooTools[tool.init].init==="function"){
-
-window.JooTools[tool.init].init(area);
-
-}else{
-
-area.innerHTML=`
-<div class="tool-ui">
-<div class="tool-error">
-Tool is not available.
-</div>
-</div>
-`;
-
-}
-
-}
-
-}else{
-
-area.innerHTML=`
-<div class="tool-ui">
-<div class="tool-error">
-This tool has no executable interface.
-</div>
-</div>
-`;
-
-}
+modal.classList.remove("hidden");
 
 updateStats();
 
 }
+
 
 function closeTool(){
 

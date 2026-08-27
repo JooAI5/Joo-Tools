@@ -370,12 +370,5 @@ Done
 
 
     <script src="tools/image-compressor.js"></script>
-    <script src="tools/image-resizer.js"></script>
-    <script src="tools/image-converter.js"></script>
-    <script src="tools/qr-generator.js"></script>
-    <script src="tools/text-counter.js"></script>
-    <script src="tools/case-converter.js"></script>
-    <script src="tools/text-diff.js"></script>
-    <script src="tools/color-converter.js"></script>
 </body>
 </html>
